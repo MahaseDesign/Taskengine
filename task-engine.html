@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission: Grade Calculator — Y8 Python</title>
+<style>
+:root {
+  --bg:#99ccff; --surface:#0a1628; --surface2:#112240;
+  --surface3:#1a3355; --border:#1e4080; --text:#e8f4ff;
+  --muted:#7aaddd; --accent:#ffc940; --accent2:#00e5ff;
+  --success:#00e676; --danger:#ff5252; --warn:#ffab40;
+  --mono:'Space Mono',monospace; --sans:'DM Sans',sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+
+/* ── TOP BAR ── */
+.topbar{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.mission-tag{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;background:rgba(255,201,64,.12);border:1px solid rgba(255,201,64,.3);padding:3px 10px;border-radius:3px;}
+.mission-title{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.xp-display{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;color:var(--accent);}
+.lives-display{display:flex;align-items:center;gap:4px;font-size:16px;}
+
+/* ── MASTER PROGRESS ── */
+.master-progress{width:100%;background:var(--surface);padding:8px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.mp-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.mp-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;}
+.mp-pct{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:35px;text-align:right;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;width:100%;max-width:1400px;flex:1;padding:20px;gap:16px;align-items:flex-start;}
+
+/* ── SIDEBAR ── */
+.step-sidebar{width:200px;flex-shrink:0;position:sticky;top:92px;}
+.sidebar-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
+.step-node{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .2s;position:relative;margin-bottom:2px;}
+.step-node:hover{background:rgba(255,255,255,.05);}
+.step-node.active{background:rgba(255,201,64,.1);}
+.step-node.locked{opacity:.4;cursor:not-allowed;}
+.step-connector{position:absolute;left:21px;top:36px;width:2px;height:10px;background:var(--border);}
+.step-node.completed .step-connector{background:var(--success);}
+.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;margin-top:1px;transition:all .3s;}
+.step-node.completed .step-dot{background:var(--success);border-color:var(--success);color:#000;font-size:12px;}
+.step-node.active .step-dot{border-color:var(--accent);color:var(--accent);background:rgba(255,201,64,.1);}
+.step-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
+.step-node.locked .step-name{color:var(--muted);}
+.step-xp{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:2px;}
+.step-node.completed .step-xp{color:var(--success);}
+
+/* ── CENTRE PANEL ── */
+.centre-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
+
+/* ── MISSION CARD ── */
+.mission-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+.card-step-badge{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+.card-xp-badge{font-family:var(--mono);font-size:12px;color:var(--accent);background:rgba(255,201,64,.1);border:1px solid rgba(255,201,64,.3);padding:2px 10px;border-radius:20px;}
+.card-body{padding:18px 20px;}
+.step-title{font-size:21px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.2;}
+.step-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.step-desc strong{color:var(--text);}
+.code-block{background:#020d1a;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;color:var(--accent2);line-height:1.8;margin-bottom:14px;overflow-x:auto;}
+.code-block .kw{color:#c792ea;}.code-block .fn{color:#82aaff;}.code-block .str{color:#c3e88d;}.code-block .cm{color:#546e7a;font-style:italic;}.code-block .num{color:#f78c6c;}
+.callout{border-left:3px solid var(--accent2);background:rgba(0,229,255,.06);border-radius:0 8px 8px 0;padding:11px 15px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:14px;}
+.callout.warn{border-color:var(--warn);background:rgba(255,171,64,.06);}
+.callout.success{border-color:var(--success);background:rgba(0,230,118,.06);}
+
+/* ── MCQ CHALLENGE ── */
+.challenge-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:4px;}
+.challenge-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.challenge-label::before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+.challenge-q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.5;}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.opt-btn{background:var(--surface3);border:2px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;text-align:left;transition:all .2s;line-height:1.4;}
+.opt-btn:hover{border-color:var(--accent2);background:rgba(0,229,255,.06);}
+.opt-btn.correct{border-color:var(--success);background:rgba(0,230,118,.12);color:var(--success);}
+.opt-btn.wrong{border-color:var(--danger);background:rgba(255,82,82,.12);color:var(--danger);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.hint-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.hint-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+.hint-btn:hover{border-color:var(--warn);color:var(--warn);}
+.hint-text{display:none;background:rgba(255,171,64,.08);border:1px solid rgba(255,171,64,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--warn);margin-top:8px;line-height:1.6;}
+.hint-text.visible{display:block;}
+.unlock-btn{width:100%;background:linear-gradient(135deg,var(--accent),#ff9800);border:none;border-radius:12px;padding:13px 24px;color:#000;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(255,201,64,.3);}
+.unlock-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(255,201,64,.4);}
+.unlock-btn.visible{display:flex;}
+
+/* ── CODE EDITOR PANEL ── */
+.editor-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
+.editor-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.editor-title{font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.editor-title::before{content:'🐍';font-size:14px;}
+.editor-tabs{display:flex;gap:6px;}
+.etab{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-family:var(--sans);cursor:pointer;transition:all .2s;}
+.etab.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+.editor-wrap{position:relative;}
+/* Code editor textarea */
+.code-editor {
+  width:100%; min-height:180px; resize:vertical;
+  background:#020d1a; color:#e8f4ff;
+  font-family:var(--mono); font-size:13px; line-height:1.8;
+  border:none; outline:none; padding:14px 16px;
+  tab-size:4; white-space:pre;
+  display:block;
+}
+.code-editor:focus { background:#030f20; }
+/* Simple keyword colouring via caret-color */
+.editor-wrap { position:relative; background:#020d1a; }
+.line-nums {
+  position:absolute; left:0; top:0; padding:14px 8px;
+  font-family:var(--mono); font-size:13px; line-height:1.8;
+  color:#546e7a; background:#020d1a; border-right:1px solid var(--border);
+  pointer-events:none; user-select:none; min-width:36px;
+  text-align:right;
+}
+/* Input panel for simulated stdin */
+.input-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#020d1a;border-top:1px solid var(--border);}
+.input-label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+.stdin-input{flex:1;background:#0a1628;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2);font-family:var(--mono);font-size:13px;outline:none;}
+.stdin-input:focus{border-color:var(--accent2);}
+.stdin-hint{font-size:11px;color:var(--muted);font-style:italic;}
+/* Run bar */
+.run-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);}
+.run-btn{display:flex;align-items:center;gap:6px;background:var(--success);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.run-btn:hover{background:#00ff88;transform:translateY(-1px);}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.check-code-btn{display:flex;align-items:center;gap:6px;background:var(--accent);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.check-code-btn:hover{background:#ffd966;}
+.check-code-btn:disabled{opacity:.4;cursor:not-allowed;}
+.reset-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;margin-left:auto;}
+.reset-btn:hover{border-color:var(--danger);color:var(--danger);}
+/* Output */
+.output-panel{background:#020d1a;border-top:1px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:13px;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.output-line{color:var(--accent2);}
+.output-error{color:var(--danger);}
+.output-success{color:var(--success);font-weight:700;}
+.output-placeholder{color:var(--muted);font-style:italic;}
+/* Code check result */
+.code-result{margin:0 14px 12px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:none;}
+.code-result.pass{background:rgba(0,230,118,.12);border:1px solid var(--success);color:var(--success);display:block;}
+.code-result.fail{background:rgba(255,82,82,.1);border:1px solid var(--danger);color:var(--danger);display:block;}
+/* Goal box */
+.goal-box{padding:10px 14px;background:rgba(0,229,255,.05);border-top:1px solid rgba(0,229,255,.15);font-size:12px;color:var(--muted);}
+.goal-box strong{color:var(--accent2);}
+
+/* ── ANIMATIONS ── */
+.xp-pop{position:fixed;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);pointer-events:none;z-index:9999;animation:floatUp .9s ease forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(1.3);}}
+.badge-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:14px 24px;display:flex;align-items:center;gap:12px;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.badge-toast.show{transform:translateX(-50%) translateY(0);}
+.badge-icon{font-size:32px;}.badge-title{font-weight:700;color:var(--text);font-size:14px;}.badge-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.complete-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;}
+.complete-overlay.show{display:flex;}
+.complete-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:36px 44px;text-align:center;max-width:480px;width:90%;box-shadow:0 0 80px rgba(255,201,64,.2);}
+.complete-emoji{font-size:60px;margin-bottom:14px;}.complete-title{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px;}.complete-sub{color:var(--muted);font-size:14px;margin-bottom:20px;}
+.complete-xp{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--accent);margin-bottom:4px;}.complete-xp-label{color:var(--muted);font-size:12px;margin-bottom:20px;}
+.complete-badges{display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.complete-badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.restart-btn{background:var(--accent);border:none;border-radius:12px;padding:11px 28px;color:#000;font-weight:700;font-size:14px;cursor:pointer;}
+
+/* ── ACCESSIBILITY ── */
+.filter-bar{position:fixed;top:56px;right:14px;display:flex;gap:5px;z-index:200;}
+.fbtn{padding:5px 10px;border-radius:13px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+body.nature-green{--bg:#f4f1e8;--surface:#1a1508;--surface2:#2a2510;--surface3:#3a3518;--border:#6a5520;--text:#f0ecd8;--muted:#a09060;--accent:#d4a820;--accent2:#4a9a4a;}
+body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;letter-spacing:.06em;word-spacing:.18em;line-height:1.9!important;}
+
+@media(max-width:900px){.step-sidebar{display:none;}.layout{padding:12px;}.options-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="filter-bar">
+  <button class="fbtn" onclick="setFilter('ng')">🌿</button>
+  <button class="fbtn" onclick="setFilter('sp')">⚡</button>
+</div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="mission-tag">Mission</span>
+    <span class="mission-title">Grade Calculator — Y8 Python</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lives-display" id="lives-display">❤️❤️❤️</div>
+    <div class="xp-display">⚡ <span id="xp-count">0</span> <span style="color:var(--muted);font-size:11px">XP</span></div>
+  </div>
+</div>
+
+<div class="master-progress">
+  <span class="mp-label">Mission progress</span>
+  <div class="mp-bar"><div class="mp-fill" id="master-fill"></div></div>
+  <span class="mp-pct" id="master-pct">0%</span>
+</div>
+
+<div class="layout">
+  <div class="step-sidebar"><div class="sidebar-label">Steps</div><div id="step-nav"></div></div>
+  <div class="centre-panel" id="centre-panel"><!-- Injected --></div>
+</div>
+
+<div class="badge-toast" id="badge-toast">
+  <div class="badge-icon" id="badge-icon">🏅</div>
+  <div><div class="badge-title" id="badge-title">Badge!</div><div class="badge-sub" id="badge-sub"></div></div>
+</div>
+
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-card">
+    <div class="complete-emoji">🎉</div>
+    <div class="complete-title">Mission Complete!</div>
+    <div class="complete-sub">You built a working Python grade calculator from scratch.</div>
+    <div class="complete-xp" id="final-xp">0</div>
+    <div class="complete-xp-label">Total XP earned</div>
+    <div class="complete-badges" id="final-badges"></div>
+    <button class="restart-btn" onclick="restartMission()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  MISSION DATA
+// ═══════════════════════════════════════════════════════════
+const MISSION = {
+  steps: [
+    {
+      id:0, title:'Mission Briefing', xp:10, badge:null,
+      content:`<p class="step-desc">You are going to build a <strong>grade calculator</strong> in Python step by step. It will ask a student for their score, then output their grade (A, B, C, D or Fail).</p>
+<div class="callout">🎯 <strong>Grade boundaries:</strong><br>A = 70+ &nbsp;|&nbsp; B = 60–69 &nbsp;|&nbsp; C = 50–59 &nbsp;|&nbsp; D = 40–49 &nbsp;|&nbsp; Fail = below 40</div>
+<p class="step-desc">Here is what the finished program produces:</p>
+<div class="code-block"><span class="cm"># Example output:</span>
+Enter your score: <span class="num">78</span>
+Score: <span class="num">78</span> — Your grade is: <span class="str">B</span></div>
+<p class="step-desc">Answer the quiz question below, then try the code editor on the right to explore Python before we begin.</p>`,
+      challenge:{
+        type:'mcq',
+        q:'What Python construct handles decision-making — choosing between different paths based on a condition?',
+        options:['for loop','if / elif / else','while loop','def function'],
+        correct:1,
+        hint:'You need to make a decision based on a value. Loops repeat code; functions define reusable blocks. Which construct picks a path based on True/False?',
+        hintCost:5
+      },
+      starterCode:`# Welcome to the Python editor!
+# Try running this to see how print() works:
+print("Hello, World!")
+print("Let's build a grade calculator!")`,
+      goal:'Just run the starter code to see Python in action.',
+      goalCheck: null  // no check needed for intro
+    },
+    {
+      id:1, title:'Getting User Input', xp:20,
+      badge:{icon:'📥',name:'Input Wrangler',desc:'Mastered getting data from the user'},
+      content:`<p class="step-desc">Use <code style="color:var(--accent2)">input()</code> to ask the user for their score. But remember — <code>input()</code> <strong>always returns a string</strong>. We must convert it to an integer with <code>int()</code>.</p>
+<div class="code-block"><span class="cm"># Ask for score and convert to integer in one line:</span>
+score = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter your score: "</span>))</div>
+<div class="callout warn">⚠️ If you forget int() and write <code>score = input(...)</code>, Python stores <code>"78"</code> (text) not <code>78</code> (number) — and the comparisons later will break.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Complete this line:<br><code style="font-family:var(--mono);color:var(--accent2);font-size:15px">score = ___(input("Enter your score: "))</code>',
+        options:['str()','int()','float()','input()'],
+        correct:1,
+        hint:'input() returns a string. To compare scores mathematically, you need a whole number. Which function converts a string like "78" into the integer 78?',
+        hintCost:5
+      },
+      starterCode:`# Type a score in the input box below, then click Run
+# Your task: add int() so score becomes a number
+
+score = input("Enter your score: ")
+print("You entered:", score)
+print("Type is:", type(score))`,
+      goal:'Make score store a number (int), not a string. Hint: wrap input() with int()',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('int(input(')) return {pass:false, msg:'❌ Not quite — make sure you wrap input() with int() like this: int(input("Enter your score: "))'};
+        if (output.includes('TypeError') || output.includes('Error')) return {pass:false, msg:'❌ There is an error in your code — check the output for clues.'};
+        return {pass:true, msg:`✅ Perfect! int(input()) converts the string "${inputVal}" into a number the program can use mathematically.`};
+      }
+    },
+    {
+      id:2, title:'Your First Grade Check', xp:25, badge:null,
+      content:`<p class="step-desc">Now check the score using <code style="color:var(--accent2)">if</code>. Start with the top grade — A requires 70 or above. The condition line ends with a colon, and the code to run is indented 4 spaces.</p>
+<div class="code-block">score = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter your score: "</span>))
+
+<span class="kw">if</span> score >= <span class="num">70</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: A"</span>)</div>
+<div class="callout">💡 <code>>=</code> means <strong>greater than or equal to</strong>. A score of exactly 70 must count as A, so we need >= not just >.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Which comparison operator means "greater than or equal to"?<br><span style="font-size:12px;color:var(--muted)">Used like: <code style="color:var(--accent2)">score ___ 70</code></span>',
+        options:['>','>=','=>','=='],
+        correct:1,
+        hint:'> means strictly greater than. == means exactly equal. You need both at once — greater than OR equal to. The symbols go in size order: > then =.',
+        hintCost:5
+      },
+      starterCode:`score = int(input("Enter your score: "))
+
+# Add your if statement below:
+# Check if score is 70 or above and print "Your grade is: A"
+
+`,
+      goal:'Write an if statement: if score >= 70 → print "Your grade is: A". Try score = 72 and score = 65.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('if') || !code.includes('>=')) return {pass:false, msg:'❌ You need an if statement with the >= operator.'};
+        const sc = parseInt(inputVal);
+        if (sc >= 70 && !output.toLowerCase().includes('a')) return {pass:false, msg:`❌ Score ${sc} is >= 70 but the output does not show grade A. Check your print statement.`};
+        if (sc < 70 && output.toLowerCase().includes('grade is: a')) return {pass:false, msg:`❌ Score ${sc} is below 70 but the output shows A. Check your condition.`};
+        return {pass:true, msg:'✅ Great if statement! The condition correctly checks for grade A.'};
+      }
+    },
+    {
+      id:3, title:'Adding elif Branches', xp:30,
+      badge:{icon:'🔀',name:'Branch Builder',desc:'Built multi-branch selection logic'},
+      content:`<p class="step-desc">Use <code style="color:var(--accent2)">elif</code> (else if) to add the remaining grades. Python checks each condition <strong>top to bottom</strong> — the first one that is True runs, the rest are skipped.</p>
+<div class="code-block">score = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter your score: "</span>))
+<span class="kw">if</span> score >= <span class="num">70</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: A"</span>)
+<span class="kw">elif</span> score >= <span class="num">60</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: B"</span>)
+<span class="kw">elif</span> score >= <span class="num">50</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: C"</span>)
+<span class="kw">elif</span> score >= <span class="num">40</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: D"</span>)</div>
+<div class="callout warn">⚠️ <strong>Order matters!</strong> Always put the highest boundary first. If you put <code>elif score >= 40</code> first, a score of 78 matches it and prints D — wrong!</div>`,
+      challenge:{
+        type:'mcq',
+        q:'If <code style="color:var(--accent2)">score = 65</code>, which condition is the FIRST one that evaluates to True?',
+        options:['score >= 70','score >= 60','score >= 50','score >= 40'],
+        correct:1,
+        hint:'Python checks top to bottom. Is 65 >= 70? No — skip. Is 65 >= 60? Yes — this is the first True condition, so this branch runs and the rest are ignored.',
+        hintCost:5
+      },
+      starterCode:`score = int(input("Enter your score: "))
+
+if score >= 70:
+    print("Your grade is: A")
+# Add elif branches for B (60+), C (50+) and D (40+) below:
+
+
+`,
+      goal:'Add elif branches for B, C and D. Test with scores: 65 (B), 55 (C), 42 (D).',
+      goalCheck:(code, output, inputVal) => {
+        const hasElif = (code.match(/elif/g)||[]).length;
+        if (hasElif < 3) return {pass:false, msg:`❌ You need 3 elif branches (B, C, D). You have ${hasElif} so far.`};
+        if (!code.includes('60') || !code.includes('50') || !code.includes('40')) return {pass:false, msg:'❌ Check your grade boundaries — you need >= 60, >= 50 and >= 40.'};
+        const sc = parseInt(inputVal);
+        if (sc >= 60 && sc < 70 && !output.toLowerCase().includes('b')) return {pass:false, msg:`❌ Score ${sc} should be B but the output does not show B.`};
+        if (sc >= 50 && sc < 60 && !output.toLowerCase().includes('c')) return {pass:false, msg:`❌ Score ${sc} should be C but the output does not show C.`};
+        return {pass:true, msg:'✅ Excellent! Your elif chain correctly handles grades B, C and D.'};
+      }
+    },
+    {
+      id:4, title:'Adding else — The Fail Branch', xp:25, badge:null,
+      content:`<p class="step-desc"><code style="color:var(--accent2)">else</code> catches everything that did not match any condition above. No condition needed — it simply runs when all the ifs and elifs were False.</p>
+<div class="code-block"><span class="cm"># ... (previous if/elif code above)</span>
+<span class="kw">elif</span> score >= <span class="num">40</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: D"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Your grade is: Fail"</span>)</div>
+<div class="callout success">✅ This completes the program! Any score below 40 falls through all the conditions and hits <code>else</code>.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'A student scores 39. Which branch of this code runs?<br><code style="font-family:var(--mono);font-size:12px;color:var(--muted)">if score>=70 … elif score>=60 … elif score>=50 … elif score>=40 … ___</code>',
+        options:['elif score >= 40','elif score >= 50','else (Fail)','if score >= 70'],
+        correct:2,
+        hint:'Trace it: 39 >= 70? No. 39 >= 60? No. 39 >= 50? No. 39 >= 40? No — 39 is less than 40. None of the conditions match, so the final else runs.',
+        hintCost:5
+      },
+      starterCode:`score = int(input("Enter your score: "))
+
+if score >= 70:
+    print("Your grade is: A")
+elif score >= 60:
+    print("Your grade is: B")
+elif score >= 50:
+    print("Your grade is: C")
+elif score >= 40:
+    print("Your grade is: D")
+# Add the else branch for Fail here:
+
+`,
+      goal:'Add the else branch so scores below 40 print "Your grade is: Fail". Test with score = 25.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('else')) return {pass:false, msg:'❌ You need an else: clause at the end (no condition, just else:).'};
+        if (!code.toLowerCase().includes('fail')) return {pass:false, msg:'❌ The else branch should print something about "Fail".'};
+        const sc = parseInt(inputVal);
+        if (sc < 40 && !output.toLowerCase().includes('fail')) return {pass:false, msg:`❌ Score ${sc} is below 40 but "Fail" does not appear in the output.`};
+        return {pass:true, msg:'✅ Complete! Your else branch correctly catches all scores below 40.'};
+      }
+    },
+    {
+      id:5, title:'Boundary Testing', xp:30, badge:null,
+      content:`<p class="step-desc">Always test with <strong>boundary values</strong> — the exact score where the grade changes. This catches bugs that normal values miss.</p>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+<tr style="background:var(--surface3);font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted)">
+  <th style="padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">Score</th>
+  <th style="padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">Expected</th>
+  <th style="padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">Why test this?</th>
+</tr>
+<tr><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--accent2)">70</td><td style="padding:7px 12px;border-bottom:1px solid var(--border)">A</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Exact A threshold</td></tr>
+<tr><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--accent2)">69</td><td style="padding:7px 12px;border-bottom:1px solid var(--border)">B</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Just below A</td></tr>
+<tr><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--accent2)">60</td><td style="padding:7px 12px;border-bottom:1px solid var(--border)">B</td><td style="padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted)">Exact B threshold</td></tr>
+<tr><td style="padding:7px 12px;font-family:var(--mono);color:var(--accent2)">39</td><td style="padding:7px 12px">Fail</td><td style="padding:7px 12px;color:var(--muted)">Just below D</td></tr>
+</table>
+<div class="callout">🧪 Use the editor to run your complete program with each boundary value. Do they all produce the right grade?</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What grade does the program output when the user enters exactly 60?<br><span style="font-size:12px;color:var(--muted)">Trace through the conditions from the top.</span>',
+        options:['A — score is 60, that is close to 70','B — the elif score >= 60 branch matches','C — 60 is roughly in the middle','Fail — 60 is below the pass mark'],
+        correct:1,
+        hint:'Trace: 60 >= 70? No. 60 >= 60? Yes — this is True! So the elif score >= 60 branch runs, which prints grade B.',
+        hintCost:5
+      },
+      starterCode:`# Complete grade calculator — test all boundary values
+# Change the number in int("70") to try different scores
+
+score = int(input("Enter your score: "))
+
+if score >= 70:
+    print("Your grade is: A")
+elif score >= 60:
+    print("Your grade is: B")
+elif score >= 50:
+    print("Your grade is: C")
+elif score >= 40:
+    print("Your grade is: D")
+else:
+    print("Your grade is: Fail")`,
+      goal:'Run the program with scores: 70, 69, 60, 59, 40, 39. All should produce the correct grade.',
+      goalCheck:(code, output, inputVal) => {
+        const sc = parseInt(inputVal);
+        const expected = sc>=70?'a':sc>=60?'b':sc>=50?'c':sc>=40?'d':'fail';
+        const outL = output.toLowerCase();
+        if (!outL.includes(expected)) return {pass:false, msg:`❌ Score ${sc} should output "${expected.toUpperCase()}" but the output shows something different. Check your boundaries.`};
+        return {pass:true, msg:`✅ Score ${sc} correctly outputs ${expected.toUpperCase()}. Try the other boundary values too!`};
+      }
+    },
+    {
+      id:6, title:'Final Version: f-strings', xp:35,
+      badge:{icon:'🐍',name:'Python Coder',desc:'Built a complete Python program!'},
+      content:`<p class="step-desc">Improve the output using an <strong>f-string</strong>. Instead of printing inside each branch, store the grade in a variable, then print once at the end with both the score and grade.</p>
+<div class="code-block">score = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter your score: "</span>))
+
+<span class="kw">if</span> score >= <span class="num">70</span>:
+    grade = <span class="str">"A"</span>
+<span class="kw">elif</span> score >= <span class="num">60</span>:
+    grade = <span class="str">"B"</span>
+<span class="kw">elif</span> score >= <span class="num">50</span>:
+    grade = <span class="str">"C"</span>
+<span class="kw">elif</span> score >= <span class="num">40</span>:
+    grade = <span class="str">"D"</span>
+<span class="kw">else</span>:
+    grade = <span class="str">"Fail"</span>
+
+<span class="fn">print</span>(<span class="str">f"Score: </span><span class="num">{score}</span><span class="str"> — Your grade is: </span><span class="num">{grade}</span><span class="str">"</span>)</div>
+<div class="callout success">✅ f-strings start with <code>f"..."</code> and use <code>{variable}</code> to insert values directly into text. Much cleaner than string concatenation!</div>`,
+      challenge:{
+        type:'mcq',
+        q:'In the improved version, which variable stores the grade result so it can be printed at the end?<br><code style="font-family:var(--mono);color:var(--accent2);font-size:13px">if score >= 70:<br>&nbsp;&nbsp;&nbsp;&nbsp;___ = "A"</code>',
+        options:['score','grade','result','output'],
+        correct:1,
+        hint:'Look at the code — instead of print("A") inside each branch, we store the letter in a variable. What is it called in the improved version above?',
+        hintCost:5
+      },
+      starterCode:`score = int(input("Enter your score: "))
+
+if score >= 70:
+    grade = "A"
+elif score >= 60:
+    grade = "B"
+elif score >= 50:
+    grade = "C"
+elif score >= 40:
+    grade = "D"
+else:
+    grade = "Fail"
+
+# Replace this line with an f-string that shows both score and grade:
+print("Your grade is:", grade)`,
+      goal:'Replace the final print() with an f-string: print(f"Score: {score} — Your grade is: {grade}")',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('f"') && !code.includes("f'")) return {pass:false, msg:'❌ Use an f-string — start your print with f"..." and use {score} and {grade} inside it.'};
+        if (!code.includes('{score}') || !code.includes('{grade}')) return {pass:false, msg:'❌ Your f-string needs both {score} and {grade} inside the curly braces.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel for details.'};
+        return {pass:true, msg:'✅ Mission complete! Your f-string produces a polished, professional output showing both the score and grade.'};
+      }
+    }
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+let GS = {
+  xp:0, lives:3, currentStep:0,
+  completedSteps:new Set(), badges:[],
+  hintUsed:[], quizAnswered:new Set(), codeChecked:new Set()
+};
+let editors = {}; // CodeMirror instances keyed by step id
+
+function runPyLite(code, inputVal) {
+  const inputLines = String(inputVal).split('\n');
+  let inputIdx = 0;
+  const output = [];
+  let error = null;
+  const vars = {};
+
+  function pyInput(prompt) {
+    if (prompt !== undefined && prompt !== '') output.push(String(prompt));
+    const v = inputLines[inputIdx] !== undefined ? inputLines[inputIdx].trim() : '0';
+    inputIdx++;
+    output.push(v);
+    return v;
+  }
+
+  function getIndent(line) { return line.match(/^( *)/)[1].length; }
+
+  function stripComment(line) {
+    let inStr = false, sc = '';
+    for (let j = 0; j < line.length; j++) {
+      const c = line[j];
+      if (!inStr && (c === '"' || c === "'")) { inStr = true; sc = c; }
+      else if (inStr && c === sc) inStr = false;
+      else if (!inStr && c === '#') return line.slice(0, j);
+    }
+    return line;
+  }
+
+  function splitCommaArgs(s) {
+    const parts = []; let cur = '', depth = 0, inStr = false, sc = '';
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (inStr) { cur += c; if (c === sc) inStr = false; continue; }
+      if (c === '"' || c === "'") { inStr = true; sc = c; cur += c; continue; }
+      if (c === '(' || c === '[') { depth++; cur += c; continue; }
+      if (c === ')' || c === ']') { depth--; cur += c; continue; }
+      if (c === ',' && depth === 0) { parts.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    if (cur.trim()) parts.push(cur.trim());
+    return parts;
+  }
+
+  function evalExpr(expr) {
+    expr = expr.trim();
+    if (!expr) return '';
+
+    // f-string
+    if ((expr.startsWith('f"') || expr.startsWith("f'")) ) {
+      const inner = expr.slice(2, -1);
+      return inner.replace(/\{([^}]+)\}/g, (_, e) => String(evalExpr(e.trim())));
+    }
+
+    // String literal (single or double, including escaped)
+    if ((expr.startsWith('"') && expr.endsWith('"')) ||
+        (expr.startsWith("'") && expr.endsWith("'"))) {
+      return expr.slice(1, -1).replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');
+    }
+
+    // True/False/None
+    if (expr === 'True') return true;
+    if (expr === 'False') return false;
+    if (expr === 'None') return null;
+
+    // Numeric literal
+    if (/^-?\d+$/.test(expr)) return parseInt(expr, 10);
+    if (/^-?\d+\.\d+$/.test(expr)) return parseFloat(expr);
+
+    // Built-in calls
+    const call = expr.match(/^([a-zA-Z_]\w*)\((.*)\)$/s);
+    if (call) {
+      const fname = call[1];
+      const argsStr = call[2].trim();
+      if (fname === 'print') { evalPrint(argsStr); return null; }
+      if (fname === 'input') {
+        const p = argsStr ? evalExpr(argsStr) : '';
+        return pyInput(p);
+      }
+      if (fname === 'int') { const v = evalExpr(argsStr); const n = parseInt(v,10); if(isNaN(n)) throw `ValueError: invalid literal for int(): '${v}'`; return n; }
+      if (fname === 'float') { const v = evalExpr(argsStr); const n = parseFloat(v); if(isNaN(n)) throw `ValueError: invalid literal for float(): '${v}'`; return n; }
+      if (fname === 'str') return String(evalExpr(argsStr));
+      if (fname === 'len') { const v = evalExpr(argsStr); return String(v).length; }
+      if (fname === 'type') {
+        const v = evalExpr(argsStr);
+        if (typeof v === 'boolean') return "<class 'bool'>";
+        if (Number.isInteger(v) && typeof v === 'number') return "<class 'int'>";
+        if (typeof v === 'number') return "<class 'float'>";
+        return "<class 'str'>";
+      }
+      throw `NameError: name '${fname}' is not defined`;
+    }
+
+    // Binary operators — parse right-to-left, outside parens/strings
+    function findOp(expr, op) {
+      let depth = 0, inStr = false, sc = '';
+      for (let i = expr.length - op.length; i >= 0; i--) {
+        const c = expr[i];
+        if (inStr) { if (c === sc) inStr = false; continue; }
+        if (c === '"' || c === "'") { inStr = true; sc = c; continue; }
+        if (c === ')' || c === ']') depth++;
+        if (c === '(' || c === '[') depth--;
+        if (depth === 0 && expr.slice(i, i+op.length) === op) {
+          const pre = i > 0 ? expr[i-1] : '';
+          const post = expr[i+op.length] || '';
+          // skip if part of longer op
+          if (op === '>' && (post === '=' || pre === '<' || pre === '-')) continue;
+          if (op === '<' && (post === '=' || pre === '-')) continue;
+          if (op === '=' && (pre === '>' || pre === '<' || pre === '!' || pre === '=')) continue;
+          if (op === '=' && post === '=') continue;
+          if (op === '/' && post === '/') continue;
+          if (op === '-' && (pre === '' || '(+-*/<>=![,'.includes(pre))) continue; // unary
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    const ops = [
+      ['>=', (a,b)=>a>=b], ['<=', (a,b)=>a<=b], ['==', (a,b)=>a==b], ['!=', (a,b)=>a!=b],
+      ['>', (a,b)=>a>b], ['<', (a,b)=>a<b],
+      ['+', (a,b)=>(typeof a==='string'||typeof b==='string') ? String(a)+String(b) : a+b],
+      ['-', (a,b)=>a-b], ['*', (a,b)=>a*b], ['//', (a,b)=>Math.floor(a/b)],
+      ['/', (a,b)=>a/b], ['%', (a,b)=>a%b]
+    ];
+    for (const [op, fn] of ops) {
+      const idx = findOp(expr, op);
+      if (idx !== -1) {
+        return fn(evalExpr(expr.slice(0, idx)), evalExpr(expr.slice(idx+op.length)));
+      }
+    }
+
+    // Variable
+    if (/^[a-zA-Z_]\w*$/.test(expr)) {
+      if (expr in vars) return vars[expr];
+      throw `NameError: name '${expr}' is not defined`;
+    }
+
+    throw `SyntaxError: could not parse: ${expr}`;
+  }
+
+  function evalPrint(argsStr) {
+    if (!argsStr.trim()) { output.push(''); return; }
+    const parts = splitCommaArgs(argsStr).map(p => evalExpr(p));
+    output.push(parts.join(' '));
+  }
+
+  // ── FLAT BLOCK EXECUTOR ──
+  // Parses lines into a tree then executes — keeps shared vars scope
+  const lines = code.split('\n');
+
+  function execLines(lineArr, baseIndent) {
+    let i = 0;
+    while (i < lineArr.length) {
+      const raw = lineArr[i];
+      const stripped = stripComment(raw).trimEnd();
+      const content = stripped.trim();
+      i++;
+      if (!content) continue;
+
+      const indent = getIndent(stripped);
+
+      // if/elif/else chain
+      const ifM = content.match(/^if\s+(.+):$/);
+      const elifM = content.match(/^elif\s+(.+):$/);
+      const elseM = content.match(/^else\s*:$/);
+
+      if (ifM || elifM || elseM) {
+        // Build the full chain from current position
+        const chain = [];
+        let ci = i - 1;
+        while (ci < lineArr.length) {
+          const cl = stripComment(lineArr[ci]).trimEnd();
+          const cs = cl.trim();
+          if (!cs) { ci++; continue; }
+          const clIndent = getIndent(cl);
+          if (clIndent < indent) break;
+          if (clIndent === indent) {
+            const im = cs.match(/^if\s+(.+):$/);
+            const em = cs.match(/^elif\s+(.+):$/);
+            const om = cs.match(/^else\s*:$/);
+            if (im) { chain.push({cond:im[1], body:[]}); ci++; }
+            else if (em) { chain.push({cond:em[1], body:[]}); ci++; }
+            else if (om) { chain.push({cond:null, body:[]}); ci++; }
+            else if (chain.length) break;
+            else ci++;
+          } else if (chain.length) {
+            chain[chain.length-1].body.push(lineArr[ci]);
+            ci++;
+          } else ci++;
+        }
+        i = ci;
+
+        // Execute first matching branch — shares vars (no recursion, uses outer scope)
+        for (const branch of chain) {
+          if (branch.cond === null || !!evalExpr(branch.cond)) {
+            // De-indent body by one level (4 spaces or actual indent)
+            const deindented = branch.body.map(l => l.slice(indent+4));
+            execLines(deindented, 0);
+            break;
+          }
+        }
+        continue;
+      }
+
+      // Assignment
+      const assignM = content.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/s);
+      if (assignM) {
+        vars[assignM[1]] = evalExpr(assignM[2].trim());
+        continue;
+      }
+
+      // print()
+      const printM = content.match(/^print\((.*)\)$/s);
+      if (printM) { evalPrint(printM[1]); continue; }
+
+      // Bare expression (e.g. input())
+      try { evalExpr(content); } catch(e) { throw String(e); }
+    }
+  }
+
+  try {
+    execLines(lines, 0);
+  } catch(e) {
+    error = String(e);
+  }
+
+  return { output, error };
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+//  RUN PYTHON — uses zero-dependency pyLite interpreter
+// ═══════════════════════════════════════════════════════════
+function runPython(stepId) {
+  const ed = editors[stepId];
+  if (!ed) return;
+  const code = ed.getValue();
+  const outEl = document.getElementById(`output-${stepId}`);
+  const runBtn = document.getElementById(`run-btn-${stepId}`);
+  const stdinVal = document.getElementById(`stdin-${stepId}`)?.value || '0';
+
+  outEl.innerHTML = '<span class="output-placeholder">Running...</span>';
+  runBtn.disabled = true;
+
+  // Small delay so "Running..." renders before execution
+  setTimeout(() => {
+    try {
+      const result = runPyLite(code, stdinVal);
+      ed._lastOutput = result.output.join('\n');
+      ed._lastInput  = stdinVal;
+
+      if (result.error) {
+        outEl.innerHTML = `<span class="output-error">⚠️ ${escHtml(result.error)}</span>`;
+      } else if (result.output.length === 0) {
+        outEl.innerHTML = '<span class="output-placeholder">✓ Ran with no output.</span>';
+      } else {
+        outEl.innerHTML = result.output
+          .map(l => `<span class="output-line">${escHtml(l)}</span>`)
+          .join('\n');
+      }
+    } catch(e) {
+      outEl.innerHTML = `<span class="output-error">⚠️ ${escHtml(String(e))}</span>`;
+    }
+    runBtn.disabled = false;
+  }, 30);
+}
+
+function handleTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+  }
+}
+
+function checkCode(stepId) {
+  const step = MISSION.steps[stepId];
+  if (!step.goalCheck) return;
+  if (GS.codeChecked.has(stepId)) return;
+  const ed = editors[stepId];
+  if (!ed) return;
+
+  const code = ed.getValue();
+  const output = ed._lastOutput || '';
+  const inputVal = ed._lastInput || '0';
+  const result = step.goalCheck(code, output, inputVal);
+
+  const resEl = document.getElementById(`code-result-${stepId}`);
+  resEl.className = 'code-result ' + (result.pass ? 'pass' : 'fail');
+  resEl.textContent = result.msg;
+
+  if (result.pass) {
+    GS.codeChecked.add(stepId);
+    awardXP(10, true);
+    // Show code badge if both quiz and code done
+    maybeCompleteStep(stepId);
+  }
+}
+
+function maybeCompleteStep(stepId) {
+  const quizDone = GS.quizAnswered.has(stepId);
+  const step     = MISSION.steps[stepId];
+  const codeDone = !step.goalCheck || GS.codeChecked.has(stepId);
+  if (quizDone && codeDone && !GS.completedSteps.has(stepId)) {
+    GS.completedSteps.add(stepId);
+    updateProgress();
+    buildNav();
+    if (step.badge) showBadge(step.badge);
+    const btn = document.getElementById(`unlock-btn-${stepId}`);
+    if (btn) { btn.classList.add('visible'); }
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function init() { buildNav(); renderStep(0); }
+
+function buildNav() {
+  const nav = document.getElementById('step-nav');
+  nav.innerHTML = '';
+  MISSION.steps.forEach((step, i) => {
+    const locked = i > 0 && !GS.completedSteps.has(i-1);
+    const completed = GS.completedSteps.has(i);
+    const active = GS.currentStep === i;
+    const isLast = i === MISSION.steps.length-1;
+    nav.innerHTML += `<div class="step-node ${completed?'completed':''} ${active?'active':''} ${locked?'locked':''}" onclick="navToStep(${i})">
+      ${!isLast?'<div class="step-connector"></div>':''}
+      <div class="step-dot">${completed?'✓':(i+1)}</div>
+      <div><div class="step-name">${step.title}</div>
+      <div class="step-xp">${completed?'✓ '+step.xp+' XP':'+'+step.xp+' XP'}</div></div>
+    </div>`;
+  });
+}
+
+function navToStep(i) {
+  if (i > 0 && !GS.completedSteps.has(i-1)) return;
+  GS.currentStep = i;
+  renderStep(i);
+  buildNav();
+}
+
+function renderStep(idx) {
+  const step = MISSION.steps[idx];
+  const ch   = step.challenge;
+  const qDone = GS.quizAnswered.has(idx);
+  const cDone = GS.codeChecked.has(idx);
+  const stepDone = GS.completedSteps.has(idx);
+
+  // MCQ options
+  let optsHtml = ch.options.map((o,i) =>
+    `<button class="opt-btn ${qDone && i===ch.correct?'correct':''}"
+      id="opt-${idx}-${i}" onclick="checkMCQ(${idx},${i})" ${qDone?'disabled':''}>${o}</button>`
+  ).join('');
+
+  const hintUsed = GS.hintUsed.includes(idx);
+
+  // Needs both quiz + code check (if goalCheck exists) to unlock
+  const needsCode = !!step.goalCheck;
+  const unlockReady = qDone && (!needsCode || cDone);
+
+  const html = `
+  <div class="mission-card">
+    <div class="card-header">
+      <span class="card-step-badge">Step ${idx+1} of ${MISSION.steps.length}</span>
+      <span class="card-xp-badge">+${step.xp} XP</span>
+    </div>
+    <div class="card-body">
+      <h2 class="step-title">${step.title}</h2>
+      ${step.content}
+      <div class="challenge-box">
+        <div class="challenge-label">Quiz challenge — +${step.xp} XP</div>
+        <div class="challenge-q">${ch.q}</div>
+        <div class="options-grid">${optsHtml}</div>
+        <div class="hint-row">
+          <button class="hint-btn" onclick="showHint(${idx})" ${hintUsed?'disabled style="opacity:.5"':''}>
+            💡 ${hintUsed?'Hint shown':`Hint (−${ch.hintCost} XP)`}
+          </button>
+        </div>
+        <div class="hint-text ${hintUsed?'visible':''}" id="hint-${idx}">${ch.hint}</div>
+        <button class="unlock-btn ${unlockReady?'visible':''}" id="unlock-btn-${idx}"
+                onclick="nextStep(${idx})">
+          ${idx===MISSION.steps.length-1?'🎉 Complete Mission!':'🔓 Unlock Next Step →'}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODE EDITOR -->
+  <div class="editor-panel">
+    <div class="editor-header">
+      <span class="editor-title">Python Editor</span>
+      <div class="editor-tabs">
+        <span style="font-size:11px;color:var(--muted);align-self:center">Type your score below, then click Run ▶</span>
+      </div>
+    </div>
+    <div class="editor-wrap">
+      <textarea class="code-editor" id="editor-${idx}" spellcheck="false"
+        onkeydown="handleTab(event)">${escHtml(step.starterCode)}</textarea>
+    </div>
+    <div class="input-row">
+      <span class="input-label">Score input:</span>
+      <input class="stdin-input" id="stdin-${idx}" type="number" min="0" max="100"
+             placeholder="Enter a score (0–100)" value="78">
+      <span class="stdin-hint">← type a score here before running</span>
+    </div>
+    <div class="run-bar">
+      <button class="run-btn" id="run-btn-${idx}" onclick="runPython(${idx})">▶ Run</button>
+      ${needsCode ? `<button class="check-code-btn" id="check-code-btn-${idx}"
+        onclick="checkCode(${idx})" ${cDone?'disabled':''}>
+        ${cDone?'✓ Code Checked':'✔ Check My Code'}
+      </button>` : ''}
+      <button class="reset-btn" onclick="resetCode(${idx})">↺ Reset</button>
+    </div>
+    <div class="output-panel" id="output-${idx}">
+      <span class="output-placeholder">Click ▶ Run to execute your Python code...</span>
+    </div>
+    ${needsCode?`<div class="code-result" id="code-result-${idx}"></div>`:''}
+    <div class="goal-box">🎯 <strong>Goal:</strong> ${step.goal}</div>
+  </div>`;
+
+  document.getElementById('centre-panel').innerHTML = html;
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  // Init plain editor
+  const ta = document.getElementById(`editor-${idx}`);
+  const editor = {
+    getValue:  () => ta.value,
+    setValue:  (v) => { ta.value = v; },
+    _lastOutput: '',
+    _lastInput:  '78'
+  };
+  editors[idx] = editor;
+}
+
+function resetCode(idx) {
+  const step = MISSION.steps[idx];
+  editors[idx]?.setValue(step.starterCode);
+  const out = document.getElementById(`output-${idx}`);
+  if (out) out.innerHTML = '<span class="output-placeholder">Click ▶ Run to execute your Python code...</span>';
+  const res = document.getElementById(`code-result-${idx}`);
+  if (res) { res.className='code-result'; res.textContent=''; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  QUIZ CHECKING
+// ═══════════════════════════════════════════════════════════
+function checkMCQ(stepIdx, chosen) {
+  if (GS.quizAnswered.has(stepIdx)) return;
+  const step = MISSION.steps[stepIdx];
+  const correct = chosen === step.challenge.correct;
+  step.challenge.options.forEach((_,i) => {
+    const btn = document.getElementById(`opt-${stepIdx}-${i}`);
+    if (!btn) return;
+    btn.disabled = true;
+    if (i === step.challenge.correct) btn.classList.add('correct');
+    else if (i === chosen && !correct) btn.classList.add('wrong');
+  });
+  if (correct) {
+    awardXP(step.xp, true);
+    GS.quizAnswered.add(stepIdx);
+    maybeCompleteStep(stepIdx);
+  } else {
+    loseLife();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function nextStep(currentIdx) {
+  const next = currentIdx + 1;
+  if (next >= MISSION.steps.length) { completeMission(); return; }
+  GS.currentStep = next;
+  renderStep(next);
+  buildNav();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  XP / LIVES
+// ═══════════════════════════════════════════════════════════
+function awardXP(amt, popup=false) {
+  GS.xp = Math.max(0, GS.xp + amt);
+  document.getElementById('xp-count').textContent = GS.xp;
+  if (popup && amt > 0) {
+    const el = document.createElement('div');
+    el.className = 'xp-pop'; el.textContent = '+'+amt+' XP';
+    const r = document.getElementById('xp-count').getBoundingClientRect();
+    el.style.left = r.left+'px'; el.style.top = (r.top+window.scrollY-10)+'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+}
+function loseLife() {
+  GS.lives = Math.max(0, GS.lives-1);
+  document.getElementById('lives-display').textContent = ['💀','❤️','❤️❤️','❤️❤️❤️'][GS.lives]||'💀';
+}
+function showHint(idx) {
+  if (GS.hintUsed.includes(idx)) return;
+  GS.hintUsed.push(idx);
+  awardXP(-MISSION.steps[idx].challenge.hintCost);
+  const el = document.getElementById(`hint-${idx}`);
+  const btn = el?.previousElementSibling?.querySelector('.hint-btn');
+  if (el) el.classList.add('visible');
+  if (btn) { btn.disabled=true; btn.style.opacity='.5'; btn.textContent='💡 Hint shown'; }
+}
+function updateProgress() {
+  const pct = Math.round(GS.completedSteps.size / MISSION.steps.length * 100);
+  document.getElementById('master-fill').style.width = pct+'%';
+  document.getElementById('master-pct').textContent = pct+'%';
+}
+function showBadge(badge) {
+  GS.badges.push(badge);
+  const toast = document.getElementById('badge-toast');
+  document.getElementById('badge-icon').textContent = badge.icon;
+  document.getElementById('badge-title').textContent = badge.name+' — Unlocked!';
+  document.getElementById('badge-sub').textContent = badge.desc;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+function completeMission() {
+  document.getElementById('final-xp').textContent = GS.xp;
+  document.getElementById('final-badges').innerHTML = GS.badges.map(b=>
+    `<div class="complete-badge">${b.icon} ${b.name}</div>`).join('');
+  document.getElementById('complete-overlay').classList.add('show');
+}
+function restartMission() {
+  GS = {xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
+  editors = {};
+  document.getElementById('complete-overlay').classList.remove('show');
+  document.getElementById('xp-count').textContent = '0';
+  document.getElementById('lives-display').textContent = '❤️❤️❤️';
+  updateProgress(); buildNav(); renderStep(0);
+}
+function setFilter(t) {
+  if (t==='ng') { document.body.classList.remove('superpower'); document.body.classList.toggle('nature-green'); }
+  else { document.body.classList.remove('nature-green'); document.body.classList.toggle('superpower'); }
+}
+
+init();
+</script>
+</body>
+</html>
