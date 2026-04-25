@@ -162,7 +162,25 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .complete-xp{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--accent);margin-bottom:4px;}.complete-xp-label{color:var(--muted);font-size:12px;margin-bottom:20px;}
 .complete-badges{display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
 .complete-badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;}
-.restart-btn{background:var(--accent);border:none;border-radius:12px;padding:11px 28px;color:#000;font-weight:700;font-size:14px;cursor:pointer;}
+.restart-btn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 28px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;}
+.restart-btn:hover{border-color:var(--accent);color:var(--accent);}
+.next-mission-btn{background:linear-gradient(135deg,var(--accent),#ff9800);border:none;border-radius:14px;padding:16px 32px;color:#000;font-weight:700;font-size:17px;cursor:pointer;transition:all .2s;width:100%;box-shadow:0 4px 24px rgba(255,201,64,.4);display:flex;align-items:center;justify-content:center;gap:10px;}
+.next-mission-btn:hover{transform:translateY(-2px);box-shadow:0 6px 32px rgba(255,201,64,.5);}
+.mission-map{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.mm-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);min-width:70px;position:relative;}
+.mm-item.done{border-color:var(--success);}
+.mm-item.current{border-color:var(--accent);}
+.mm-icon{font-size:22px;}
+.mm-label{font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono);}
+.mm-item.done .mm-label{color:var(--success);}
+.mm-item.current .mm-label{color:var(--accent);}
+.mm-check{position:absolute;top:-6px;right:-6px;background:var(--success);border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;}
+.complete-divider{width:100%;height:1px;background:var(--border);margin:18px 0;}
+.next-preview{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:18px;text-align:left;}
+.next-preview-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.next-preview-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.next-preview-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+.xp-bonus{display:inline-flex;align-items:center;gap:4px;background:rgba(255,201,64,.1);border:1px solid rgba(255,201,64,.3);border-radius:20px;padding:2px 10px;font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:6px;}
 
 /* ── ACCESSIBILITY ── */
 .filter-bar{position:fixed;top:56px;right:14px;display:flex;gap:5px;z-index:200;}
@@ -211,11 +229,40 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
   <div class="complete-card">
     <div class="complete-emoji">🎉</div>
     <div class="complete-title">Mission Complete!</div>
-    <div class="complete-sub">You built a working Python grade calculator from scratch.</div>
-    <div class="complete-xp" id="final-xp">0</div>
-    <div class="complete-xp-label">Total XP earned</div>
+    <div class="complete-sub" id="complete-sub-text">You built a working Python grade calculator from scratch.</div>
+
+    <!-- XP earned -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
+      <div>
+        <div class="complete-xp" id="final-xp">0</div>
+        <div class="complete-xp-label">XP earned</div>
+      </div>
+    </div>
+
+    <!-- Badges earned -->
     <div class="complete-badges" id="final-badges"></div>
-    <button class="restart-btn" onclick="restartMission()">🔄 Play Again</button>
+
+    <!-- Mission map -->
+    <div class="complete-divider"></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Mission Progress</div>
+    <div class="mission-map" id="mission-map-display"></div>
+
+    <!-- Next mission preview -->
+    <div class="next-preview" id="next-preview">
+      <div class="next-preview-label">⚡ Next Mission</div>
+      <div class="next-preview-title" id="next-mission-title"></div>
+      <div class="next-preview-desc" id="next-mission-desc"></div>
+      <div class="xp-bonus" id="next-xp-bonus"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <button class="next-mission-btn" id="next-mission-btn" onclick="goNextMission()">
+      <span id="next-btn-icon">🚀</span>
+      <span id="next-btn-label">Start Next Mission</span>
+      <span>→</span>
+    </button>
+    <div class="complete-divider"></div>
+    <button class="restart-btn" onclick="restartMission()">🔄 Replay this mission</button>
   </div>
 </div>
 
@@ -224,6 +271,21 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 //  MISSION DATA
 // ═══════════════════════════════════════════════════════════
 const MISSION = {
+  title: 'Grade Calculator',
+  subtitle: 'Y8 Python — Mission 1 of 4',
+  nextMission: {
+    title: 'Shopping Cart Calculator',
+    description: 'Use loops and lists to build a Python shopping cart that totals prices and applies a discount.',
+    file: 'task-shopping-cart.html',
+    badge: '🛒',
+    xpReward: 200
+  },
+  missionMap: [
+    { id:1, title:'Grade Calculator',      done:true,  badge:'🐍', file:'task-engine.html' },
+    { id:2, title:'Shopping Cart',         done:false, badge:'🛒', file:'task-shopping-cart.html' },
+    { id:3, title:'Password Checker',      done:false, badge:'🔐', file:'task-password.html' },
+    { id:4, title:'Times Table Trainer',   done:false, badge:'✖️',  file:'task-times-table.html' },
+  ],
   steps: [
     {
       id:0, title:'Mission Briefing', xp:10, badge:null,
@@ -1027,10 +1089,71 @@ function showBadge(badge) {
   setTimeout(() => toast.classList.remove('show'), 3500);
 }
 function completeMission() {
+  // Save completion to localStorage
+  const saveKey = 'ks3_mission_' + (MISSION.missionMap[0]?.id || 1);
+  localStorage.setItem(saveKey, JSON.stringify({ xp: GS.xp, badges: GS.badges.map(b=>b.name), completedAt: new Date().toISOString() }));
+
   document.getElementById('final-xp').textContent = GS.xp;
-  document.getElementById('final-badges').innerHTML = GS.badges.map(b=>
-    `<div class="complete-badge">${b.icon} ${b.name}</div>`).join('');
+
+  // Badges
+  document.getElementById('final-badges').innerHTML = GS.badges.length
+    ? GS.badges.map(b=>`<div class="complete-badge">${b.icon} ${b.name}</div>`).join('')
+    : '';
+
+  // Mission map
+  const mapEl = document.getElementById('mission-map-display');
+  mapEl.innerHTML = MISSION.missionMap.map((m, idx) => {
+    const isCurrent = m.id === MISSION.missionMap[0].id;
+    const isDone = m.done || isCurrent;
+    return `<div class="mm-item ${isDone?'done':''} ${isCurrent?'current':''}">
+      ${isDone?'<div class="mm-check">✓</div>':''}
+      <div class="mm-icon">${m.badge}</div>
+      <div class="mm-label">M${m.id}</div>
+    </div>`;
+  }).join('');
+
+  // Next mission
+  const next = MISSION.nextMission;
+  if (next) {
+    document.getElementById('next-mission-title').textContent = next.badge + ' ' + next.title;
+    document.getElementById('next-mission-desc').textContent = next.description;
+    document.getElementById('next-xp-bonus').textContent = '+' + next.xpReward + ' XP available';
+    document.getElementById('next-btn-icon').textContent = next.badge;
+    document.getElementById('next-btn-label').textContent = 'Start: ' + next.title;
+    document.getElementById('next-preview').style.display = 'block';
+    document.getElementById('next-mission-btn').style.display = 'flex';
+  } else {
+    // Final mission in series
+    document.getElementById('next-preview').style.display = 'none';
+    document.getElementById('next-mission-btn').textContent = '🏆 All Missions Complete!';
+    document.getElementById('next-mission-btn').onclick = null;
+    document.getElementById('complete-sub-text').textContent = 'You have completed all Python missions!';
+  }
+
   document.getElementById('complete-overlay').classList.add('show');
+}
+
+function goNextMission() {
+  const next = MISSION.nextMission;
+  if (!next) return;
+  // If file exists in same folder, navigate to it
+  // Otherwise show a friendly message
+  if (next.file && next.file !== 'task-engine.html') {
+    window.location.href = next.file;
+  } else {
+    // For prototype — show coming soon message
+    const btn = document.getElementById('next-mission-btn');
+    btn.textContent = '🔧 Coming Soon — check back soon!';
+    btn.style.background = 'var(--surface3)';
+    btn.style.color = 'var(--muted)';
+    btn.style.boxShadow = 'none';
+    setTimeout(() => {
+      btn.innerHTML = '<span>🚀</span><span>Start Next Mission</span><span>→</span>';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.boxShadow = '';
+    }, 2500);
+  }
 }
 function restartMission() {
   GS = {xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
