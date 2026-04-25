@@ -603,20 +603,29 @@ function runPyLite(code, inputVal) {
     return parts;
   }
 
+  // ── EXPRESSION EVALUATOR ──
   function evalExpr(expr) {
     expr = expr.trim();
     if (!expr) return '';
 
     // f-string
-    if ((expr.startsWith('f"') || expr.startsWith("f'")) ) {
+    if (expr.startsWith('f"') || expr.startsWith("f'")) {
       const inner = expr.slice(2, -1);
       return inner.replace(/\{([^}]+)\}/g, (_, e) => String(evalExpr(e.trim())));
     }
 
-    // String literal (single or double, including escaped)
+    // String literal
     if ((expr.startsWith('"') && expr.endsWith('"')) ||
         (expr.startsWith("'") && expr.endsWith("'"))) {
-      return expr.slice(1, -1).replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');
+      return expr.slice(1, -1)
+        .replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');
+    }
+
+    // List literal [a, b, c]
+    if (expr.startsWith('[') && expr.endsWith(']')) {
+      const inner = expr.slice(1, -1).trim();
+      if (!inner) return [];
+      return splitCommaArgs(inner).map(e => evalExpr(e));
     }
 
     // True/False/None
@@ -628,49 +637,112 @@ function runPyLite(code, inputVal) {
     if (/^-?\d+$/.test(expr)) return parseInt(expr, 10);
     if (/^-?\d+\.\d+$/.test(expr)) return parseFloat(expr);
 
-    // Built-in calls
+    // List index: var[expr]
+    const idxM = expr.match(/^([a-zA-Z_]\w*)\[(.+)\]$/);
+    if (idxM) {
+      const lst = evalExpr(idxM[1]);
+      const i   = evalExpr(idxM[2]);
+      if (!Array.isArray(lst)) throw `TypeError: '${typeof lst}' is not subscriptable`;
+      const idx = i < 0 ? lst.length + i : i;
+      if (idx < 0 || idx >= lst.length) throw `IndexError: list index out of range`;
+      return lst[idx];
+    }
+
+    // Method calls: var.method(args)
+    const methodM = expr.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
+    if (methodM) {
+      const obj    = evalExpr(methodM[1]);
+      const method = methodM[2];
+      const args   = methodM[3].trim() ? splitCommaArgs(methodM[3]).map(a => evalExpr(a)) : [];
+      if (typeof obj === 'string') {
+        if (method === 'upper')   return obj.toUpperCase();
+        if (method === 'lower')   return obj.toLowerCase();
+        if (method === 'strip')   return obj.trim();
+        if (method === 'replace') return obj.replaceAll(String(args[0]), String(args[1]));
+        if (method === 'split')   return args.length ? obj.split(String(args[0])) : obj.trim().split(/\s+/);
+        if (method === 'startswith') return obj.startsWith(String(args[0]));
+        if (method === 'endswith')   return obj.endsWith(String(args[0]));
+      }
+      if (Array.isArray(obj)) {
+        if (method === 'append') { obj.push(args[0]); return null; }
+        if (method === 'pop')    { return args.length ? obj.splice(args[0],1)[0] : obj.pop(); }
+        if (method === 'remove') { const i=obj.indexOf(args[0]); if(i>-1)obj.splice(i,1); return null; }
+        if (method === 'sort')   { obj.sort((a,b)=>a-b); return null; }
+        if (method === 'reverse'){ obj.reverse(); return null; }
+        if (method === 'count')  { return obj.filter(x=>x===args[0]).length; }
+        if (method === 'index')  { const i=obj.indexOf(args[0]); if(i===-1)throw 'ValueError: not in list'; return i; }
+      }
+      throw `AttributeError: no method '${method}' on ${typeof obj}`;
+    }
+
+    // Built-in function calls
     const call = expr.match(/^([a-zA-Z_]\w*)\((.*)\)$/s);
     if (call) {
-      const fname = call[1];
+      const fname  = call[1];
       const argsStr = call[2].trim();
-      if (fname === 'print') { evalPrint(argsStr); return null; }
-      if (fname === 'input') {
-        const p = argsStr ? evalExpr(argsStr) : '';
-        return pyInput(p);
+      const args   = argsStr ? splitCommaArgs(argsStr).map(a => evalExpr(a)) : [];
+
+      if (fname === 'print')  { evalPrint(argsStr); return null; }
+      if (fname === 'input')  { return pyInput(argsStr ? evalExpr(argsStr) : ''); }
+      if (fname === 'int')    { const v=args[0]; const n=parseInt(v,10); if(isNaN(n)) throw `ValueError: invalid literal for int(): '${v}'`; return n; }
+      if (fname === 'float')  { const v=args[0]; const n=parseFloat(v); if(isNaN(n)) throw `ValueError: invalid literal for float(): '${v}'`; return n; }
+      if (fname === 'str')    { return String(args[0]); }
+      if (fname === 'bool')   { return Boolean(args[0]); }
+      if (fname === 'len')    { const v=args[0]; return Array.isArray(v)?v.length:String(v).length; }
+      if (fname === 'sum')    { const v=args[0]; if(!Array.isArray(v)) throw 'TypeError: sum expects a list'; return v.reduce((a,b)=>a+b, 0); }
+      if (fname === 'max')    { const v=Array.isArray(args[0])?args[0]:args; return Math.max(...v); }
+      if (fname === 'min')    { const v=Array.isArray(args[0])?args[0]:args; return Math.min(...v); }
+      if (fname === 'abs')    { return Math.abs(args[0]); }
+      if (fname === 'round')  {
+        if (args.length > 1) {
+          const fixed = parseFloat(args[0].toFixed(args[1]));
+          // Preserve trailing zeros as Python does: round(90.0, 2) -> 90.0 not 90
+          const str = fixed.toFixed(args[1]);
+          // If all trailing chars are 0 except one decimal place, trim to 1
+          return parseFloat(str.replace(/(\.\d*[1-9])0+$/, '$1').replace(/\.0+$/, '.0'));
+        }
+        return Math.round(args[0]);
       }
-      if (fname === 'int') { const v = evalExpr(argsStr); const n = parseInt(v,10); if(isNaN(n)) throw `ValueError: invalid literal for int(): '${v}'`; return n; }
-      if (fname === 'float') { const v = evalExpr(argsStr); const n = parseFloat(v); if(isNaN(n)) throw `ValueError: invalid literal for float(): '${v}'`; return n; }
-      if (fname === 'str') return String(evalExpr(argsStr));
-      if (fname === 'len') { const v = evalExpr(argsStr); return String(v).length; }
-      if (fname === 'type') {
-        const v = evalExpr(argsStr);
-        if (typeof v === 'boolean') return "<class 'bool'>";
-        if (Number.isInteger(v) && typeof v === 'number') return "<class 'int'>";
-        if (typeof v === 'number') return "<class 'float'>";
+      if (fname === 'range')  {
+        const [start,stop,step] = args.length===1?[0,args[0],1]:args.length===2?[args[0],args[1],1]:args;
+        const result = [];
+        for (let i=start; step>0?i<stop:i>stop; i+=step) result.push(i);
+        return result;
+      }
+      if (fname === 'list')   { const v=args[0]; return Array.isArray(v)?[...v]:v?[...String(v)]:[]; }
+      if (fname === 'type')   {
+        const v=args[0];
+        if (Array.isArray(v)) return "<class 'list'>";
+        if (typeof v==='boolean') return "<class 'bool'>";
+        if (Number.isInteger(v)&&typeof v==='number') return "<class 'int'>";
+        if (typeof v==='number') return "<class 'float'>";
         return "<class 'str'>";
       }
       throw `NameError: name '${fname}' is not defined`;
     }
 
-    // Binary operators — parse right-to-left, outside parens/strings
+    // Binary operators
     function findOp(expr, op) {
-      let depth = 0, inStr = false, sc = '';
-      for (let i = expr.length - op.length; i >= 0; i--) {
-        const c = expr[i];
-        if (inStr) { if (c === sc) inStr = false; continue; }
-        if (c === '"' || c === "'") { inStr = true; sc = c; continue; }
-        if (c === ')' || c === ']') depth++;
-        if (c === '(' || c === '[') depth--;
-        if (depth === 0 && expr.slice(i, i+op.length) === op) {
-          const pre = i > 0 ? expr[i-1] : '';
-          const post = expr[i+op.length] || '';
-          // skip if part of longer op
-          if (op === '>' && (post === '=' || pre === '<' || pre === '-')) continue;
-          if (op === '<' && (post === '=' || pre === '-')) continue;
-          if (op === '=' && (pre === '>' || pre === '<' || pre === '!' || pre === '=')) continue;
-          if (op === '=' && post === '=') continue;
-          if (op === '/' && post === '/') continue;
-          if (op === '-' && (pre === '' || '(+-*/<>=![,'.includes(pre))) continue; // unary
+      let depth=0, inStr=false, sc='';
+      for (let i=expr.length-op.length; i>=0; i--) {
+        const c=expr[i];
+        if (inStr) { if(c===sc) inStr=false; continue; }
+        if (c==='"'||c==="'") { inStr=true; sc=c; continue; }
+        if (c===')'||c===']') depth++;
+        if (c==='('||c==='[') depth--;
+        if (depth===0 && expr.slice(i,i+op.length)===op) {
+          const pre  = i>0?expr[i-1]:'';
+          const post = expr[i+op.length]||'';
+          if (op==='>' && (post==='='||pre==='-')) continue;
+          if (op==='<' && (post==='='||pre==='-')) continue;
+          if (op==='=' && (pre==='>'||pre==='<'||pre==='!'||pre==='=')) continue;
+          if (op==='=' && post==='=') continue;
+          if (op==='/' && post==='/') continue;
+          if (op==='-' && (pre===''||'(+-*/<>=![,'.includes(pre))) continue;
+          // Word operators need non-word boundaries
+          if (['in','and','or','not in'].includes(op)) {
+            if (/[a-zA-Z0-9_]/.test(pre) || /[a-zA-Z0-9_]/.test(post)) continue;
+          }
           return i;
         }
       }
@@ -678,18 +750,29 @@ function runPyLite(code, inputVal) {
     }
 
     const ops = [
-      ['>=', (a,b)=>a>=b], ['<=', (a,b)=>a<=b], ['==', (a,b)=>a==b], ['!=', (a,b)=>a!=b],
-      ['>', (a,b)=>a>b], ['<', (a,b)=>a<b],
-      ['+', (a,b)=>(typeof a==='string'||typeof b==='string') ? String(a)+String(b) : a+b],
-      ['-', (a,b)=>a-b], ['*', (a,b)=>a*b], ['//', (a,b)=>Math.floor(a/b)],
-      ['/', (a,b)=>a/b], ['%', (a,b)=>a%b]
+      ['not in', (a,b)=>Array.isArray(b)?!b.includes(a):!String(b).includes(String(a))],
+      ['in',     (a,b)=>Array.isArray(b)?b.includes(a):String(b).includes(String(a))],
+      ['and',    (a,b)=>a&&b],
+      ['or',     (a,b)=>a||b],
+      ['>=', (a,b)=>a>=b], ['<=', (a,b)=>a<=b],
+      ['==', (a,b)=>a==b], ['!=', (a,b)=>a!=b],
+      ['>', (a,b)=>a>b],   ['<', (a,b)=>a<b],
+      ['+', (a,b)=>(typeof a==='string'||typeof b==='string')?String(a)+String(b):
+                   (Array.isArray(a)&&Array.isArray(b))?[...a,...b]:a+b],
+      ['-', (a,b)=>a-b], ['*', (a,b)=>a*b],
+      ['//', (a,b)=>Math.floor(a/b)], ['/', (a,b)=>a/b], ['%', (a,b)=>a%b]
     ];
     for (const [op, fn] of ops) {
       const idx = findOp(expr, op);
       if (idx !== -1) {
-        return fn(evalExpr(expr.slice(0, idx)), evalExpr(expr.slice(idx+op.length)));
+        const L = evalExpr(expr.slice(0, idx));
+        const R = evalExpr(expr.slice(idx + op.length));
+        return fn(L, R);
       }
     }
+
+    // Unary not
+    if (expr.startsWith('not ')) return !evalExpr(expr.slice(4));
 
     // Variable
     if (/^[a-zA-Z_]\w*$/.test(expr)) {
@@ -701,33 +784,41 @@ function runPyLite(code, inputVal) {
   }
 
   function evalPrint(argsStr) {
-    if (!argsStr.trim()) { output.push(''); return; }
-    const parts = splitCommaArgs(argsStr).map(p => evalExpr(p));
-    output.push(parts.join(' '));
+    // Handle sep= and end= kwargs
+    const sepM = argsStr.match(/,\s*sep\s*=\s*["']([^"']*)["']/);
+    const sep  = sepM ? sepM[1] : ' ';
+    const clean = argsStr.replace(/,?\s*(sep|end)\s*=\s*["'][^"']*["']/g, '');
+    if (!clean.trim()) { output.push(''); return; }
+    const parts = splitCommaArgs(clean).map(p => {
+      const v = evalExpr(p);
+      if (typeof v === 'boolean') return v ? 'True' : 'False';
+      if (Array.isArray(v)) return '[' + v.map(x=>{
+        if (typeof x==='boolean') return x?'True':'False';
+        if (typeof x==='string') return `'${x}'`;
+        if (typeof x==='number'&&!Number.isInteger(x)) return x.toString();
+        return x;
+      }).join(', ') + ']';
+      if (typeof v==='number'&&!Number.isInteger(v)) return v.toString();
+      return String(v);
+    });
+    output.push(parts.join(sep));
   }
 
   // ── FLAT BLOCK EXECUTOR ──
-  // Parses lines into a tree then executes — keeps shared vars scope
   const lines = code.split('\n');
 
   function execLines(lineArr, baseIndent) {
     let i = 0;
     while (i < lineArr.length) {
-      const raw = lineArr[i];
+      const raw     = lineArr[i];
       const stripped = stripComment(raw).trimEnd();
-      const content = stripped.trim();
+      const content  = stripped.trim();
       i++;
       if (!content) continue;
-
       const indent = getIndent(stripped);
 
       // if/elif/else chain
-      const ifM = content.match(/^if\s+(.+):$/);
-      const elifM = content.match(/^elif\s+(.+):$/);
-      const elseM = content.match(/^else\s*:$/);
-
-      if (ifM || elifM || elseM) {
-        // Build the full chain from current position
+      if (/^(if|elif)\s+.+:$/.test(content) || /^else\s*:$/.test(content)) {
         const chain = [];
         let ci = i - 1;
         while (ci < lineArr.length) {
@@ -742,31 +833,88 @@ function runPyLite(code, inputVal) {
             const om = cs.match(/^else\s*:$/);
             if (im) { chain.push({cond:im[1], body:[]}); ci++; }
             else if (em) { chain.push({cond:em[1], body:[]}); ci++; }
-            else if (om) { chain.push({cond:null, body:[]}); ci++; }
+            else if (om) { chain.push({cond:null,  body:[]}); ci++; }
             else if (chain.length) break;
             else ci++;
-          } else if (chain.length) {
-            chain[chain.length-1].body.push(lineArr[ci]);
-            ci++;
-          } else ci++;
+          } else if (chain.length) { chain[chain.length-1].body.push(lineArr[ci]); ci++; }
+          else ci++;
         }
         i = ci;
-
-        // Execute first matching branch — shares vars (no recursion, uses outer scope)
         for (const branch of chain) {
           if (branch.cond === null || !!evalExpr(branch.cond)) {
-            // De-indent body by one level (4 spaces or actual indent)
-            const deindented = branch.body.map(l => l.slice(indent+4));
-            execLines(deindented, 0);
+            execLines(branch.body.map(l => l.slice(indent+4)), 0);
             break;
           }
         }
         continue;
       }
 
+      // for loop
+      const forM = content.match(/^for\s+([a-zA-Z_]\w*)\s+in\s+(.+):$/);
+      if (forM) {
+        const varName  = forM[1];
+        const iterable = evalExpr(forM[2]);
+        const body     = [];
+        let ci = i;
+        while (ci < lineArr.length) {
+          const cl = stripComment(lineArr[ci]).trimEnd();
+          if (!cl.trim()) { ci++; continue; }
+          if (getIndent(cl) <= indent) break;
+          body.push(lineArr[ci]); ci++;
+        }
+        i = ci;
+        const iter = Array.isArray(iterable) ? iterable : [];
+        for (const val of iter) {
+          vars[varName] = val;
+          execLines(body.map(l => l.slice(indent+4)), 0);
+        }
+        continue;
+      }
+
+      // while loop
+      const whileM = content.match(/^while\s+(.+):$/);
+      if (whileM) {
+        const body = [];
+        let ci = i;
+        while (ci < lineArr.length) {
+          const cl = stripComment(lineArr[ci]).trimEnd();
+          if (!cl.trim()) { ci++; continue; }
+          if (getIndent(cl) <= indent) break;
+          body.push(lineArr[ci]); ci++;
+        }
+        i = ci;
+        let guard = 0;
+        while (evalExpr(whileM[1]) && guard++ < 1000) {
+          execLines(body.map(l => l.slice(indent+4)), 0);
+        }
+        continue;
+      }
+
+      // Augmented assignment: x += 1, x -= 1 etc.
+      const augM = content.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=)\s*(.+)$/);
+      if (augM) {
+        const cur = vars[augM[1]] !== undefined ? vars[augM[1]] : 0;
+        const rhs = evalExpr(augM[3]);
+        if (augM[2]==='+=') vars[augM[1]] = (typeof cur==='string'||typeof rhs==='string')?String(cur)+String(rhs):cur+rhs;
+        if (augM[2]==='-=') vars[augM[1]] = cur - rhs;
+        if (augM[2]==='*=') vars[augM[1]] = cur * rhs;
+        if (augM[2]==='/=') vars[augM[1]] = cur / rhs;
+        continue;
+      }
+
+      // List item assignment: items[0] = value
+      const listAssignM = content.match(/^([a-zA-Z_]\w*)\[(.+)\]\s*=\s*(.+)$/);
+      if (listAssignM) {
+        const lst = vars[listAssignM[1]];
+        if (!Array.isArray(lst)) throw `TypeError: '${listAssignM[1]}' is not a list`;
+        const idx = evalExpr(listAssignM[2]);
+        vars[listAssignM[1]][idx] = evalExpr(listAssignM[3]);
+        continue;
+      }
+
       // Assignment
       const assignM = content.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/s);
-      if (assignM) {
+      if (assignM && !['if','elif','else','while','for'].includes(assignM[1])) {
         vars[assignM[1]] = evalExpr(assignM[2].trim());
         continue;
       }
@@ -775,21 +923,18 @@ function runPyLite(code, inputVal) {
       const printM = content.match(/^print\((.*)\)$/s);
       if (printM) { evalPrint(printM[1]); continue; }
 
-      // Bare expression (e.g. input())
+      // Method call as statement: list.append(x) etc.
+      const stmtMethod = content.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
+      if (stmtMethod) { evalExpr(content); continue; }
+
+      // Bare expression
       try { evalExpr(content); } catch(e) { throw String(e); }
     }
   }
 
-  try {
-    execLines(lines, 0);
-  } catch(e) {
-    error = String(e);
-  }
-
+  try { execLines(lines, 0); } catch(e) { error = String(e); }
   return { output, error };
 }
-
-
 
 // ═══════════════════════════════════════════════════════════
 //  RUN PYTHON — uses zero-dependency pyLite interpreter
