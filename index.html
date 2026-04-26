@@ -490,11 +490,21 @@ else:
     print("Your grade is: Fail")`,
       goal:'Run the program with scores: 70, 69, 60, 59, 40, 39. All should produce the correct grade.',
       goalCheck:(code, output, inputVal) => {
-        const sc = parseInt(inputVal);
-        const expected = sc>=70?'a':sc>=60?'b':sc>=50?'c':sc>=40?'d':'fail';
-        const outL = output.toLowerCase();
-        if (!outL.includes(expected)) return {pass:false, msg:`❌ Score ${sc} should output "${expected.toUpperCase()}" but the output shows something different. Check your boundaries.`};
-        return {pass:true, msg:`✅ Score ${sc} correctly outputs ${expected.toUpperCase()}. Try the other boundary values too!`};
+        // Validate code structure — boundaries and branches must be present
+        if (!code.includes('70') || !code.includes('60') || !code.includes('50') || !code.includes('40'))
+          return {pass:false, msg:'❌ Make sure your code has all the grade boundaries (70, 60, 50, 40).'};
+        if ((code.match(/elif/g)||[]).length < 3)
+          return {pass:false, msg:'❌ Your code needs at least 3 elif branches.'};
+        if (!code.includes('else'))
+          return {pass:false, msg:'❌ Your code needs an else branch for the Fail grade.'};
+        // If the student has already run the code, also validate that output
+        if (output) {
+          const sc = parseInt(inputVal);
+          const expected = sc>=70?'a':sc>=60?'b':sc>=50?'c':sc>=40?'d':'fail';
+          if (!output.toLowerCase().includes(expected))
+            return {pass:false, msg:`❌ Score ${sc} should output "${expected.toUpperCase()}" but the output shows something different. Check your boundaries.`};
+        }
+        return {pass:true, msg:'✅ Boundary test code looks correct! Run with 70, 69, 60, 39 to verify each boundary yourself.'};
       }
     },
     {
@@ -1207,11 +1217,12 @@ function renderStep(idx) {
 
   // Init plain editor
   const ta = document.getElementById(`editor-${idx}`);
+  const stdinEl = document.getElementById(`stdin-${idx}`);
   const editor = {
     getValue:  () => ta.value,
     setValue:  (v) => { ta.value = v; },
     _lastOutput: '',
-    _lastInput:  '78'
+    _lastInput:  stdinEl?.value || '78'
   };
   editors[idx] = editor;
 }
