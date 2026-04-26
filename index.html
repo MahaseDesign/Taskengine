@@ -546,6 +546,74 @@ print("Your grade is:", grade)`,
         if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel for details.'};
         return {pass:true, msg:'✅ Mission complete! Your f-string produces a polished, professional output showing both the score and grade.'};
       }
+    },
+    {
+      id:7, title:'Scope: Global vs Local', xp:40,
+      badge:{icon:'🔭',name:'Scope Scout',desc:'Understood global and local variable scope'},
+      content:`<p class="step-desc">A <strong>variable's scope</strong> determines where in your code it can be read or changed. Python has two main scopes:</p>
+<div class="callout">🌍 <strong>Global scope</strong> — a variable created <em>outside</em> any function. It exists for the entire program.<br><br>🏠 <strong>Local scope</strong> — a variable created <em>inside</em> a function. It only exists while that function is running; once the function finishes, it's gone.</div>
+<div class="code-block"><span class="cm"># Global variable — created outside any function</span>
+school_name = <span class="str">"Corby Academy"</span>
+
+<span class="kw">def</span> <span class="fn">greet_student</span>():
+    <span class="cm"># Local variable — only exists inside this function</span>
+    message = <span class="str">"Welcome to "</span> + school_name
+    <span class="fn">print</span>(message)
+
+<span class="fn">greet_student</span>()
+<span class="cm"># print(message)  ← This would crash! message doesn't exist out here</span></div>
+<div class="callout warn">⚠️ If you try to use a <strong>local</strong> variable outside its function, Python raises a <code>NameError</code> — it simply doesn't exist in that scope.</div>
+<p class="step-desc">Now apply this to the grade calculator. The <code>grade</code> variable is <strong>local</strong> inside a function — but the <code>score</code> can be passed in as a <strong>parameter</strong>.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">get_grade</span>(score):
+    <span class="cm"># grade is LOCAL — it only lives inside get_grade()</span>
+    <span class="kw">if</span> score >= <span class="num">70</span>:
+        grade = <span class="str">"A"</span>
+    <span class="kw">elif</span> score >= <span class="num">60</span>:
+        grade = <span class="str">"B"</span>
+    <span class="kw">elif</span> score >= <span class="num">50</span>:
+        grade = <span class="str">"C"</span>
+    <span class="kw">elif</span> score >= <span class="num">40</span>:
+        grade = <span class="str">"D"</span>
+    <span class="kw">else</span>:
+        grade = <span class="str">"Fail"</span>
+    <span class="kw">return</span> grade   <span class="cm"># send the result back out</span>
+
+<span class="cm"># score is GLOBAL here — created outside any function</span>
+score = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter your score: "</span>))
+result = <span class="fn">get_grade</span>(score)
+<span class="fn">print</span>(<span class="str">f"Score: </span><span class="num">{score}</span><span class="str"> — Your grade is: </span><span class="num">{result}</span><span class="str">"</span>)</div>
+<div class="callout success">✅ <code>return</code> lets a function send a local value back to the global scope, where it can be stored in a new variable (<code>result</code>).</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Look at this code:<br><code style="font-family:var(--mono);font-size:12px;color:var(--accent2);display:block;margin:8px 0;line-height:1.8">def calculate():<br>&nbsp;&nbsp;&nbsp;&nbsp;bonus = 10<br>&nbsp;&nbsp;&nbsp;&nbsp;return bonus<br><br>calculate()<br>print(bonus)</code>What happens when <code>print(bonus)</code> runs?',
+        options:['It prints 10','It prints nothing','It crashes with a NameError','It prints "bonus"'],
+        correct:2,
+        hint:'bonus is created inside calculate() — it is a local variable. Once the function finishes, bonus no longer exists. Trying to use it outside causes a NameError.',
+        hintCost:5
+      },
+      starterCode:`# Your task: wrap the grade logic inside a function called get_grade(score)
+# It should RETURN the grade string (not print it)
+# Then call it from global scope and print the result with an f-string
+
+def get_grade(score):
+    # Write your if/elif/else here
+    # Remember to return the grade at the end!
+    pass
+
+score = int(input("Enter your score: "))
+result = get_grade(score)
+print(f"Score: {score} — Your grade is: {result}")`,
+      goal:'Complete get_grade() so it returns the correct grade string. The final print should show both the score and grade.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('def get_grade')) return {pass:false, msg:'❌ You need a function called get_grade(score).'};
+        if (!code.includes('return')) return {pass:false, msg:'❌ Your function needs a return statement to send the grade back to global scope.'};
+        if (output.includes('None')) return {pass:false, msg:'❌ The function returned None — make sure every branch (if/elif/else) sets grade and you return it.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel. Did you complete all if/elif/else branches?'};
+        const sc = parseInt(inputVal);
+        const expected = sc>=70?'a':sc>=60?'b':sc>=50?'c':sc>=40?'d':'fail';
+        if (!output.toLowerCase().includes(expected)) return {pass:false, msg:`❌ Score ${sc} should produce "${expected.toUpperCase()}" but the output looks wrong. Check your grade boundaries inside the function.`};
+        return {pass:true, msg:`✅ Excellent! get_grade() is a clean function with local scope — grade lives inside it and is returned to global scope as result.`};
+      }
     }
   ]
 };
