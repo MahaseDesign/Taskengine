@@ -619,9 +619,16 @@ print(f"Score: {score} — Your grade is: {result}")`,
         if (!code.includes('return')) return {pass:false, msg:'❌ Your function needs a return statement to send the grade back to global scope.'};
         if (output.includes('None')) return {pass:false, msg:'❌ The function returned None — make sure every branch (if/elif/else) sets grade and you return it.'};
         if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel. Did you complete all if/elif/else branches?'};
-        const sc = parseInt(inputVal);
-        const expected = sc>=70?'a':sc>=60?'b':sc>=50?'c':sc>=40?'d':'fail';
-        if (!output.toLowerCase().includes(expected)) return {pass:false, msg:`❌ Score ${sc} should produce "${expected.toUpperCase()}" but the output looks wrong. Check your grade boundaries inside the function.`};
+        // Test the function directly across grade boundaries using multiple scores
+        const tests = [{sc:78,exp:'a'},{sc:65,exp:'b'},{sc:53,exp:'c'},{sc:42,exp:'d'},{sc:30,exp:'fail'}];
+        for (const {sc, exp} of tests) {
+          try {
+            const r = runPyLite(code, String(sc));
+            if (r.error) return {pass:false, msg:`❌ Score ${sc} caused an error: ${r.error}`};
+            const out = r.output.join('\n').toLowerCase();
+            if (!out.includes(exp)) return {pass:false, msg:`❌ Score ${sc} should produce "${exp.toUpperCase()}" but the output was: ${r.output.join(' ') || '(nothing)'}. Check your grade boundaries.`};
+          } catch(e) { return {pass:false, msg:`❌ Error running code with score ${sc}: ${e}`}; }
+        }
         return {pass:true, msg:`✅ Excellent! get_grade() is a clean function with local scope — grade lives inside it and is returned to global scope as result.`};
       }
     }
