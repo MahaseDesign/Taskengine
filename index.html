@@ -644,6 +644,7 @@ function runPyLite(code, inputVal) {
   const output = [];
   let error = null;
   const vars = {};
+  const funcs = {};
 
   function pyInput(prompt) {
     if (prompt !== undefined && prompt !== '') output.push(String(prompt));
@@ -796,6 +797,23 @@ function runPyLite(code, inputVal) {
         if (typeof v==='number') return "<class 'float'>";
         return "<class 'str'>";
       }
+      // User-defined function call
+      if (fname in funcs) {
+        const fn = funcs[fname];
+        // Set up params as vars (save any that clash)
+        const savedVars = {};
+        fn.params.forEach((p, idx) => {
+          if (p in vars) savedVars[p] = vars[p];
+          vars[p] = args[idx] !== undefined ? args[idx] : null;
+        });
+        // Execute body with a returnSignal object
+        const sig = {};
+        try { execLines(fn.body.map(l => l.slice(fn.indent + 4 > 0 ? fn.indent + 4 : 4)), 0, sig); }
+        catch(e) { if (e !== sig) throw e; }
+        // Restore shadowed vars
+        fn.params.forEach(p => { if (p in savedVars) vars[p] = savedVars[p]; else delete vars[p]; });
+        return 'val' in sig ? sig.val : null;
+      }
       throw `NameError: name '${fname}' is not defined`;
     }
 
@@ -885,7 +903,7 @@ function runPyLite(code, inputVal) {
   // ── FLAT BLOCK EXECUTOR ──
   const lines = code.split('\n');
 
-  function execLines(lineArr, baseIndent) {
+  function execLines(lineArr, baseIndent, returnSignal) {
     let i = 0;
     while (i < lineArr.length) {
       const raw     = lineArr[i];
@@ -894,6 +912,34 @@ function runPyLite(code, inputVal) {
       i++;
       if (!content) continue;
       const indent = getIndent(stripped);
+
+      // def function definition
+      const defM = content.match(/^def\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*:$/);
+      if (defM) {
+        const fname = defM[1];
+        const params = defM[2].trim() ? defM[2].split(',').map(p => p.trim()) : [];
+        const body = [];
+        let ci = i;
+        while (ci < lineArr.length) {
+          const cl = stripComment(lineArr[ci]).trimEnd();
+          if (!cl.trim()) { body.push(lineArr[ci]); ci++; continue; }
+          if (getIndent(cl) <= indent) break;
+          body.push(lineArr[ci]); ci++;
+        }
+        i = ci;
+        funcs[fname] = { params, body, indent };
+        continue;
+      }
+
+      // pass statement
+      if (content === 'pass') continue;
+
+      // return statement (at global level, used inside function execution)
+      const retM = content.match(/^return\s*(.*)$/);
+      if (retM && returnSignal) {
+        returnSignal.val = retM[1].trim() ? evalExpr(retM[1].trim()) : null;
+        throw returnSignal;
+      }
 
       // if/elif/else chain
       if (/^(if|elif)\s+.+:$/.test(content) || /^else\s*:$/.test(content)) {
@@ -920,7 +966,7 @@ function runPyLite(code, inputVal) {
         i = ci;
         for (const branch of chain) {
           if (branch.cond === null || !!evalExpr(branch.cond)) {
-            execLines(branch.body.map(l => l.slice(indent+4)), 0);
+            execLines(branch.body.map(l => l.slice(indent+4)), 0, returnSignal);
             break;
           }
         }
@@ -944,7 +990,7 @@ function runPyLite(code, inputVal) {
         const iter = Array.isArray(iterable) ? iterable : [];
         for (const val of iter) {
           vars[varName] = val;
-          execLines(body.map(l => l.slice(indent+4)), 0);
+          execLines(body.map(l => l.slice(indent+4)), 0, returnSignal);
         }
         continue;
       }
@@ -963,7 +1009,7 @@ function runPyLite(code, inputVal) {
         i = ci;
         let guard = 0;
         while (evalExpr(whileM[1]) && guard++ < 1000) {
-          execLines(body.map(l => l.slice(indent+4)), 0);
+          execLines(body.map(l => l.slice(indent+4)), 0, returnSignal);
         }
         continue;
       }
