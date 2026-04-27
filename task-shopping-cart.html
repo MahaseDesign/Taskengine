@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission: Shopping Cart — Y8 Python</title>
+<title>Mission: Shopping Cart Calculator — Y9 Python</title>
 <style>
 :root {
   --bg:#99ccff; --surface:#0a1628; --surface2:#112240;
@@ -15,8 +15,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
-
-/* ── TOP BAR ── */
 .topbar{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .topbar-left{display:flex;align-items:center;gap:12px;}
 .mission-tag{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;background:rgba(255,201,64,.12);border:1px solid rgba(255,201,64,.3);padding:3px 10px;border-radius:3px;}
@@ -24,18 +22,12 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .topbar-right{display:flex;align-items:center;gap:16px;}
 .xp-display{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;color:var(--accent);}
 .lives-display{display:flex;align-items:center;gap:4px;font-size:16px;}
-
-/* ── MASTER PROGRESS ── */
 .master-progress{width:100%;background:var(--surface);padding:8px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
 .mp-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
 .mp-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
 .mp-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;}
 .mp-pct{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:35px;text-align:right;}
-
-/* ── LAYOUT ── */
 .layout{display:flex;width:100%;max-width:1400px;flex:1;padding:20px;gap:16px;align-items:flex-start;}
-
-/* ── SIDEBAR ── */
 .step-sidebar{width:200px;flex-shrink:0;position:sticky;top:92px;}
 .sidebar-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
 .step-node{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .2s;position:relative;margin-bottom:2px;}
@@ -51,11 +43,7 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .step-node.locked .step-name{color:var(--muted);}
 .step-xp{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:2px;}
 .step-node.completed .step-xp{color:var(--success);}
-
-/* ── CENTRE PANEL ── */
 .centre-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
-
-/* ── MISSION CARD ── */
 .mission-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
 .card-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
 .card-step-badge{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
@@ -69,8 +57,6 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .callout{border-left:3px solid var(--accent2);background:rgba(0,229,255,.06);border-radius:0 8px 8px 0;padding:11px 15px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:14px;}
 .callout.warn{border-color:var(--warn);background:rgba(255,171,64,.06);}
 .callout.success{border-color:var(--success);background:rgba(0,230,118,.06);}
-
-/* ── MCQ CHALLENGE ── */
 .challenge-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:4px;}
 .challenge-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .challenge-label::before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;}
@@ -90,42 +76,18 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .unlock-btn{width:100%;background:linear-gradient(135deg,var(--accent),#ff9800);border:none;border-radius:12px;padding:13px 24px;color:#000;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(255,201,64,.3);}
 .unlock-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(255,201,64,.4);}
 .unlock-btn.visible{display:flex;}
-
-/* ── CODE EDITOR PANEL ── */
 .editor-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
 .editor-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .editor-title{font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
-.editor-title::before{content:'🐍';font-size:14px;}
-.editor-tabs{display:flex;gap:6px;}
-.etab{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-family:var(--sans);cursor:pointer;transition:all .2s;}
-.etab.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
-.editor-wrap{position:relative;}
-/* Code editor textarea */
-.code-editor {
-  width:100%; min-height:180px; resize:vertical;
-  background:#020d1a; color:#e8f4ff;
-  font-family:var(--mono); font-size:13px; line-height:1.8;
-  border:none; outline:none; padding:14px 16px;
-  tab-size:4; white-space:pre;
-  display:block;
-}
-.code-editor:focus { background:#030f20; }
-/* Simple keyword colouring via caret-color */
-.editor-wrap { position:relative; background:#020d1a; }
-.line-nums {
-  position:absolute; left:0; top:0; padding:14px 8px;
-  font-family:var(--mono); font-size:13px; line-height:1.8;
-  color:#546e7a; background:#020d1a; border-right:1px solid var(--border);
-  pointer-events:none; user-select:none; min-width:36px;
-  text-align:right;
-}
-/* Input panel for simulated stdin */
+.editor-title::before{content:'🛒';font-size:14px;}
+.editor-wrap{position:relative;background:#020d1a;}
+.code-editor{width:100%;min-height:180px;resize:vertical;background:#020d1a;color:#e8f4ff;font-family:var(--mono);font-size:13px;line-height:1.8;border:none;outline:none;padding:14px 16px;tab-size:4;white-space:pre;display:block;}
+.code-editor:focus{background:#030f20;}
 .input-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#020d1a;border-top:1px solid var(--border);}
 .input-label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
 .stdin-input{flex:1;background:#0a1628;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2);font-family:var(--mono);font-size:13px;outline:none;}
 .stdin-input:focus{border-color:var(--accent2);}
 .stdin-hint{font-size:11px;color:var(--muted);font-style:italic;}
-/* Run bar */
 .run-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);}
 .run-btn{display:flex;align-items:center;gap:6px;background:var(--success);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
 .run-btn:hover{background:#00ff88;transform:translateY(-1px);}
@@ -135,21 +97,16 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .check-code-btn:disabled{opacity:.4;cursor:not-allowed;}
 .reset-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;margin-left:auto;}
 .reset-btn:hover{border-color:var(--danger);color:var(--danger);}
-/* Output */
 .output-panel{background:#020d1a;border-top:1px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:13px;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
 .output-line{color:var(--accent2);}
 .output-error{color:var(--danger);}
 .output-success{color:var(--success);font-weight:700;}
 .output-placeholder{color:var(--muted);font-style:italic;}
-/* Code check result */
 .code-result{margin:0 14px 12px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:none;}
 .code-result.pass{background:rgba(0,230,118,.12);border:1px solid var(--success);color:var(--success);display:block;}
 .code-result.fail{background:rgba(255,82,82,.1);border:1px solid var(--danger);color:var(--danger);display:block;}
-/* Goal box */
 .goal-box{padding:10px 14px;background:rgba(0,229,255,.05);border-top:1px solid rgba(0,229,255,.15);font-size:12px;color:var(--muted);}
 .goal-box strong{color:var(--accent2);}
-
-/* ── ANIMATIONS ── */
 .xp-pop{position:fixed;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);pointer-events:none;z-index:9999;animation:floatUp .9s ease forwards;}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(1.3);}}
 .badge-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:14px 24px;display:flex;align-items:center;gap:12px;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 40px rgba(0,0,0,.4);}
@@ -170,10 +127,8 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .mm-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);min-width:70px;position:relative;}
 .mm-item.done{border-color:var(--success);}
 .mm-item.current{border-color:var(--accent);}
-.mm-icon{font-size:22px;}
-.mm-label{font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono);}
-.mm-item.done .mm-label{color:var(--success);}
-.mm-item.current .mm-label{color:var(--accent);}
+.mm-icon{font-size:22px;}.mm-label{font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono);}
+.mm-item.done .mm-label{color:var(--success);}.mm-item.current .mm-label{color:var(--accent);}
 .mm-check{position:absolute;top:-6px;right:-6px;background:var(--success);border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;}
 .complete-divider{width:100%;height:1px;background:var(--border);margin:18px 0;}
 .next-preview{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:18px;text-align:left;}
@@ -181,13 +136,10 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .next-preview-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
 .next-preview-desc{font-size:13px;color:var(--muted);line-height:1.5;}
 .xp-bonus{display:inline-flex;align-items:center;gap:4px;background:rgba(255,201,64,.1);border:1px solid rgba(255,201,64,.3);border-radius:20px;padding:2px 10px;font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:6px;}
-
-/* ── ACCESSIBILITY ── */
 .filter-bar{position:fixed;top:56px;right:14px;display:flex;gap:5px;z-index:200;}
 .fbtn{padding:5px 10px;border-radius:13px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
 body.nature-green{--bg:#f4f1e8;--surface:#1a1508;--surface2:#2a2510;--surface3:#3a3518;--border:#6a5520;--text:#f0ecd8;--muted:#a09060;--accent:#d4a820;--accent2:#4a9a4a;}
 body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;letter-spacing:.06em;word-spacing:.18em;line-height:1.9!important;}
-
 @media(max-width:900px){.step-sidebar{display:none;}.layout{padding:12px;}.options-grid{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -201,7 +153,7 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 <div class="topbar">
   <div class="topbar-left">
     <span class="mission-tag">Mission</span>
-    <span class="mission-title">Shopping Cart Calculator — Y8 Python</span>
+    <span class="mission-title">Shopping Cart Calculator — Y9 Python</span>
   </div>
   <div class="topbar-right">
     <div class="lives-display" id="lives-display">❤️❤️❤️</div>
@@ -217,7 +169,7 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 
 <div class="layout">
   <div class="step-sidebar"><div class="sidebar-label">Steps</div><div id="step-nav"></div></div>
-  <div class="centre-panel" id="centre-panel"><!-- Injected --></div>
+  <div class="centre-panel" id="centre-panel"></div>
 </div>
 
 <div class="badge-toast" id="badge-toast">
@@ -229,40 +181,28 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
   <div class="complete-card">
     <div class="complete-emoji">🎉</div>
     <div class="complete-title">Mission Complete!</div>
-    <div class="complete-sub" id="complete-sub-text">You built a complete Python shopping cart with discount logic!</div>
-
-    <!-- XP earned -->
+    <div class="complete-sub" id="complete-sub-text">You built a working Python shopping cart from scratch.</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
       <div>
         <div class="complete-xp" id="final-xp">0</div>
         <div class="complete-xp-label">XP earned</div>
       </div>
     </div>
-
-    <!-- Badges earned -->
     <div class="complete-badges" id="final-badges"></div>
-
-    <!-- Mission map -->
-    <div class="complete-divider"></div>
-    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Mission Progress</div>
     <div class="mission-map" id="mission-map-display"></div>
-
-    <!-- Next mission preview -->
-    <div class="next-preview" id="next-preview">
-      <div class="next-preview-label">⚡ Next Mission</div>
+    <div class="complete-divider"></div>
+    <div class="next-preview" id="next-preview" style="display:none">
+      <div class="next-preview-label">Up Next</div>
       <div class="next-preview-title" id="next-mission-title"></div>
       <div class="next-preview-desc" id="next-mission-desc"></div>
-      <div class="xp-bonus" id="next-xp-bonus"></div>
+      <div class="xp-bonus">⚡ <span id="next-xp-bonus"></span></div>
     </div>
-
-    <!-- Action buttons -->
     <button class="next-mission-btn" id="next-mission-btn" onclick="goNextMission()">
-      <span id="next-btn-icon">🚀</span>
-      <span id="next-btn-label">Start Next Mission</span>
-      <span>→</span>
+      <span id="next-btn-icon">🚀</span><span id="next-btn-label">Start Next Mission</span><span>→</span>
     </button>
-    <div class="complete-divider"></div>
-    <button class="restart-btn" onclick="restartMission()">🔄 Replay this mission</button>
+    <div style="margin-top:12px">
+      <button class="restart-btn" onclick="restartMission()">↺ Restart Mission</button>
+    </div>
   </div>
 </div>
 
@@ -271,369 +211,558 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 //  MISSION DATA
 // ═══════════════════════════════════════════════════════════
 const MISSION = {
-  title: 'Shopping Cart Calculator',
-  subtitle: 'Y8 Python — Mission 2 of 4',
   nextMission: {
     title: 'Password Checker',
-    description: 'Build a Python program that checks password strength using string methods and Boolean logic.',
+    description: 'Use string methods, loops and functions to build a Python password strength checker.',
     file: 'task-password.html',
     badge: '🔐',
-    xpReward: 220
+    xpReward: 250
   },
   missionMap: [
     { id:1, title:'Grade Calculator', done:true,  badge:'🐍', file:'task-engine.html' },
-    { id:2, title:'Shopping Cart',    done:true,  badge:'🛒', file:'task-shopping-cart.html' },
+    { id:2, title:'Shopping Cart',    done:false, badge:'🛒', file:'task-shopping-cart.html' },
     { id:3, title:'Password Checker', done:false, badge:'🔐', file:'task-password.html' },
     { id:4, title:'Times Table',      done:false, badge:'✖️',  file:'task-times-table.html' },
   ],
   steps: [
-    // ── STEP 0 ── Mission Briefing
+    // ── STEP 0: MISSION BRIEFING ──────────────────────────────
     {
       id:0, title:'Mission Briefing', xp:10, badge:null,
-      content:`<p class="step-desc">You are going to build a <strong>shopping cart calculator</strong> in Python. It will store items and prices, calculate the total, and apply a discount for large orders.</p>
-<div class="callout">🎯 <strong>What the finished program does:</strong><br>
-Asks the user how many items they want to buy → takes the price of each → adds them to a cart list → calculates the total → applies 10% discount if total ≥ £20 → prints a full receipt.</div>
+      content:`<p class="step-desc">You are going to build a <strong>shopping cart calculator</strong> in Python. It will store item prices in a list, loop through them to calculate a total, apply a discount using a function, and print a formatted receipt.</p>
+<div class="callout">🛒 <strong>What the finished program does:</strong><br>
+Stores item prices in a list → loops through to total them → applies a 10% discount if total is over £50 → prints a receipt using f-strings.</div>
 <div class="code-block"><span class="cm"># Example output:</span>
---- Shopping Cart ---
-Item 1: £<span class="num">5.99</span>
-Item 2: £<span class="num">12.50</span>
-Item 3: £<span class="num">3.75</span>
-Subtotal: £<span class="num">22.24</span>
-Discount (10%): £<span class="num">2.22</span>
-Total: £<span class="num">20.02</span></div>
-<p class="step-desc">New Python skills you will use: <strong>lists</strong>, <strong>for loops</strong>, <strong>range()</strong>, <strong>append()</strong>, <strong>sum()</strong> and <strong>round()</strong>.</p>`,
+Items: <span class="num">3</span>
+Subtotal: £<span class="num">62.97</span>
+Discount (10%): £<span class="num">6.30</span>
+Total: £<span class="num">56.67</span></div>
+<p class="step-desc">We will build this step by step. Answer the quiz question to get started.</p>`,
       challenge:{
         type:'mcq',
-        q:'To store multiple prices in one variable, which Python data structure should you use?',
-        options:['A string — e.g. prices = "5.99, 12.50"',
-                 'A list — e.g. prices = [5.99, 12.50]',
-                 'An integer — e.g. prices = 5',
-                 'A boolean — e.g. prices = True'],
+        q:'In Python, which data structure is best for storing a collection of item prices like [1.99, 4.50, 12.00]?',
+        options:['A string','A list','An integer','A function'],
         correct:1,
-        hint:'You need to store multiple values in a single variable and loop through them. Which data structure holds an ordered collection of items?',
+        hint:'A list uses square brackets [ ] and can store multiple values in order. Strings store text, integers store single numbers.',
         hintCost:5
       },
-      starterCode:`# Try creating a list and printing it
-cart = [2.99, 5.50, 1.25]
-print(cart)
-print("Number of items:", len(cart))`,
-      goal:'Run the starter code to see how a list works. Notice how len() counts the items.',
+      starterCode:`# Welcome to the Shopping Cart mission!
+# Run this to see a preview of what you'll build.
+
+prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+total = sum(prices)
+print(f"Total: £{total}")`,
+      goal:'Run the starter code to see the output. Answer the quiz to continue.',
       goalCheck: null
     },
 
-    // ── STEP 1 ── Lists and append()
+    // ── STEP 1: CREATING A LIST ───────────────────────────────
     {
-      id:1, title:'Building the Cart with append()', xp:20,
-      badge:{icon:'📦',name:'List Master',desc:'Used lists and append() like a pro'},
-      content:`<p class="step-desc">A shopping cart starts empty, then items are added one at a time. In Python, we use an empty list and <code style="color:var(--accent2)">append()</code> to add items to it.</p>
-<div class="code-block"><span class="cm"># Start with an empty cart</span>
-cart = []
-
-<span class="cm"># Add prices to the cart</span>
-cart.<span class="fn">append</span>(<span class="num">5.99</span>)
-cart.<span class="fn">append</span>(<span class="num">12.50</span>)
-cart.<span class="fn">append</span>(<span class="num">3.75</span>)
-
-<span class="fn">print</span>(cart)              <span class="cm"># [5.99, 12.5, 3.75]</span>
-<span class="fn">print</span>(<span class="fn">len</span>(cart))         <span class="cm"># 3</span></div>
-<div class="callout">💡 <code>append()</code> adds one item to the <strong>end</strong> of a list. Each call adds one more item. The list grows as you add to it.</div>
-<div class="callout warn">⚠️ <code>cart = []</code> creates an <strong>empty</strong> list — no items, length 0. Without this starting point, append() has nothing to add to.</div>`,
+      id:1, title:'Creating a Price List', xp:20, badge:null,
+      content:`<p class="step-desc">A <strong>list</strong> is an ordered collection of values stored in a single variable. You create one using square brackets, with items separated by commas.</p>
+<div class="code-block">prices = [<span class="num">2.99</span>, <span class="num">7.50</span>, <span class="num">14.99</span>, <span class="num">3.49</span>]
+<span class="fn">print</span>(prices)          <span class="cm"># prints the whole list</span>
+<span class="fn">print</span>(prices[<span class="num">0</span>])     <span class="cm"># first item: 2.99</span>
+<span class="fn">print</span>(prices[<span class="num">2</span>])     <span class="cm"># third item: 14.99</span>
+<span class="fn">print</span>(<span class="fn">len</span>(prices))   <span class="cm"># how many items: 4</span></div>
+<div class="callout">📌 Lists are <strong>zero-indexed</strong> — the first item is at position <code>[0]</code>, the second at <code>[1]</code>, and so on. <code>len()</code> returns the total number of items.</div>
+<p class="step-desc">You can also <strong>add items</strong> to a list using <code>.append()</code>:</p>
+<div class="code-block">prices = [<span class="num">2.99</span>, <span class="num">7.50</span>]
+prices.<span class="fn">append</span>(<span class="num">4.99</span>)
+<span class="fn">print</span>(prices)  <span class="cm"># [2.99, 7.50, 4.99]</span></div>`,
       challenge:{
         type:'mcq',
-        q:'What does <code style="color:var(--accent2)">cart.append(9.99)</code> do?',
-        options:['Creates a new list called cart with 9.99 in it',
-                 'Adds 9.99 to the end of the existing cart list',
-                 'Replaces all items in cart with 9.99',
-                 'Removes 9.99 from the cart list'],
+        q:'Given <code>items = [5.00, 10.00, 15.00]</code>, what does <code>print(items[1])</code> output?',
+        options:['5.00','10.00','15.00','3'],
         correct:1,
-        hint:'append() means "add to". It takes the existing list and adds the new item at the end — it does not create a new list or replace anything.',
+        hint:'Remember lists are zero-indexed. items[0] is 5.00, items[1] is the second item.',
         hintCost:5
       },
-      starterCode:`cart = []
+      starterCode:`# Create a list of 4 item prices for a shopping cart
+# Then print: the whole list, the first item, and how many items there are
 
-# Add three prices to the cart using append()
-cart.append(5.99)
-cart.append(12.50)
-# Add one more price of your choice:
+prices = [2.99, 7.50, 14.99, 3.49]
 
+# Print the whole list
+print(prices)
 
-print("Cart:", cart)
-print("Number of items:", len(cart))`,
-      goal:'Add a third item using append(), so len(cart) prints 3.',
+# Print the first item
+print(prices[0])
+
+# Print how many items
+print(len(prices))`,
+      goal:'Create a list called prices with at least 4 values. Print the list, the first item, and the length.',
       goalCheck:(code, output, inputVal) => {
-        if (!code.includes('append')) return {pass:false, msg:'❌ Use cart.append() to add items to the cart.'};
-        const appends = (code.match(/\.append\(/g)||[]).length;
-        if (appends < 3) return {pass:false, msg:`❌ You need 3 append() calls. You have ${appends}. Add one more price.`};
-        if (!output.includes('3')) return {pass:false, msg:'❌ len(cart) should be 3 but the output does not show 3. Check your append() calls.'};
-        return {pass:true, msg:'✅ Great! Your cart has 3 items. append() adds each price to the end of the list.'};
+        if (!code.includes('prices') || !code.includes('[')) return {pass:false, msg:'❌ Create a list called prices using square brackets [ ].'};
+        if (!code.includes('len(')) return {pass:false, msg:'❌ Use len(prices) to print the number of items.'};
+        if (!code.includes('prices[0]') && !code.includes('prices[0]')) return {pass:false, msg:'❌ Access the first item using prices[0].'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        const lines = output.trim().split('\n');
+        if (lines.length < 3) return {pass:false, msg:'❌ Make sure you have three print() calls — the list, first item, and length.'};
+        return {pass:true, msg:'✅ Great list work! You can create, access, and measure a list.'};
       }
     },
 
-    // ── STEP 2 ── for loop to calculate total
+    // ── STEP 2: FOR LOOP ──────────────────────────────────────
     {
-      id:2, title:'Totalling with a for Loop', xp:30,
-      badge:null,
-      content:`<p class="step-desc">To add up all prices in the cart, use a <strong>for loop</strong>. It goes through each item in the list, one at a time, and adds it to a running total.</p>
-<div class="code-block">prices = [<span class="num">5.99</span>, <span class="num">12.50</span>, <span class="num">3.75</span>]
+      id:2, title:'Looping Through Prices', xp:25, badge:{icon:'🔁',name:'Loop Master',desc:'Used a for loop to process a list'},
+      content:`<p class="step-desc">A <strong>for loop</strong> lets you run the same code once for each item in a list. This is the key to processing every price in the cart without writing the same line over and over.</p>
+<div class="code-block">prices = [<span class="num">2.99</span>, <span class="num">7.50</span>, <span class="num">14.99</span>]
+
+<span class="kw">for</span> price <span class="kw">in</span> prices:
+    <span class="fn">print</span>(price)</div>
+<div class="callout">🔁 The variable <code>price</code> takes on the value of each item in the list, one at a time. The indented block runs once per item.</div>
+<p class="step-desc">To calculate a running total, use a <strong>counter variable</strong> that starts at 0 and grows with each loop:</p>
+<div class="code-block">prices = [<span class="num">2.99</span>, <span class="num">7.50</span>, <span class="num">14.99</span>]
 total = <span class="num">0</span>
 
 <span class="kw">for</span> price <span class="kw">in</span> prices:
-    total += price       <span class="cm"># same as: total = total + price</span>
+    total += price   <span class="cm"># same as: total = total + price</span>
 
-<span class="fn">print</span>(<span class="fn">round</span>(total, <span class="num">2</span>))   <span class="cm"># 22.24</span></div>
-<div class="callout">💡 <code>total += price</code> is shorthand for <code>total = total + price</code>. It adds the current price to whatever is already in total. Always start total at 0 before the loop!</div>
-<div class="callout warn">⚠️ <code>round(total, 2)</code> rounds to 2 decimal places — essential for money so you don't print £22.240000000003.</div>`,
+<span class="fn">print</span>(total)  <span class="cm"># 25.48</span></div>
+<div class="callout warn">⚠️ The <code>total = 0</code> line must be <strong>before</strong> the loop, otherwise it resets to 0 every iteration!</div>`,
       challenge:{
         type:'mcq',
-        q:'In this loop — <code style="color:var(--accent2)">for price in prices:</code> — what does <code style="color:var(--accent2)">price</code> represent on each iteration?',
-        options:['The index number (0, 1, 2…) of each item',
-                 'The current item from the prices list',
-                 'The total of all prices so far',
-                 'The length of the prices list'],
+        q:'Why must <code>total = 0</code> be written <em>before</em> the for loop, not inside it?',
+        options:[
+          'Python only allows assignment outside loops',
+          'If it were inside, total would reset to 0 on every iteration',
+          'The loop variable must be declared first',
+          'It makes no difference where it goes'
+        ],
         correct:1,
-        hint:'In a for loop, the variable before "in" takes the VALUE of each item in turn. So if prices = [5.99, 12.50], first price = 5.99, then price = 12.50.',
+        hint:'Think about what happens each time the loop body runs. If total = 0 is inside, it runs on every iteration — wiping out the running total each time.',
         hintCost:5
       },
-      starterCode:`prices = [5.99, 12.50, 3.75]
+      starterCode:`prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+
+# Create a total variable starting at 0
 total = 0
 
-# Write a for loop that adds each price to total:
+# Loop through prices and add each one to total
 for price in prices:
-    # add price to total here:
+    total += price
 
-
-print("Subtotal: £" + str(round(total, 2)))`,
-      goal:'Complete the for loop with total += price so the subtotal prints £22.24.',
+# Print the result
+print(f"Total: {total}")`,
+      goal:'Use a for loop to add all prices to a total variable. Print the total.',
       goalCheck:(code, output, inputVal) => {
-        if (!code.includes('for') || !code.includes('in')) return {pass:false, msg:'❌ You need a for loop: for price in prices:'};
-        if (!code.includes('total') || (!code.includes('+=') && !code.includes('total = total')))
-          return {pass:false, msg:'❌ Inside the loop, add price to total: total += price'};
-        if (!output.includes('22.24')) return {pass:false, msg:`❌ The subtotal should be £22.24. Check your loop adds price to total on every iteration.`};
-        return {pass:true, msg:'✅ Loop working! total += price correctly accumulates all prices to give £22.24.'};
-      }
-    },
-
-    // ── STEP 3 ── User input with range()
-    {
-      id:3, title:'Getting Prices from the User', xp:30,
-      badge:{icon:'🔢',name:'Loop Legend',desc:'Used range() and for loops to collect input'},
-      content:`<p class="step-desc">Instead of hardcoded prices, ask the user how many items they have, then collect each price with a loop using <code style="color:var(--accent2)">range()</code>.</p>
-<div class="code-block">cart = []
-n = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"How many items? "</span>))
-
-<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n):
-    price = <span class="fn">float</span>(<span class="fn">input</span>(<span class="str">f"Price of item </span><span class="num">{i+1}</span><span class="str">: £"</span>))
-    cart.<span class="fn">append</span>(price)
-
-<span class="fn">print</span>(<span class="str">f"</span><span class="num">{len(cart)}</span><span class="str"> items added to cart"</span>)
-<span class="fn">print</span>(<span class="str">f"Subtotal: £</span><span class="num">{round(sum(cart), 2)}</span><span class="str">"</span>)</div>
-<div class="callout">💡 <code>range(n)</code> produces the numbers 0, 1, 2… up to (but not including) n. So <code>range(3)</code> loops 3 times. <code>i+1</code> in the prompt shows the user a friendly item number starting at 1.</div>
-<div class="callout warn">⚠️ Use <code>float(input(...))</code> not <code>int()</code> for prices — prices have decimal places (£2.99, £10.50).</div>`,
-      challenge:{
-        type:'mcq',
-        q:'What does <code style="color:var(--accent2)">range(3)</code> produce when used in a for loop?',
-        options:['The numbers 1, 2, 3',
-                 'The numbers 0, 1, 2 — loops 3 times',
-                 'The number 3 once',
-                 'The numbers 0, 1, 2, 3 — loops 4 times'],
-        correct:1,
-        hint:'range() starts at 0 by default and goes UP TO but NOT INCLUDING the number you give it. range(3) gives 0, 1, 2 — that is 3 values, 3 loops.',
-        hintCost:5
-      },
-      starterCode:`cart = []
-n = int(input("How many items? "))
-
-for i in range(n):
-    price = float(input(f"Price of item {i+1}: £"))
-    cart.append(price)
-
-print(f"{len(cart)} items added to cart")
-print(f"Subtotal: £{round(sum(cart), 2)}")`,
-      goal:'Enter 3 in the input box below and test with prices: 5.99, 12.50, 3.75. The subtotal should be £22.24.\n\nSeparate multiple inputs with commas or new lines in the input box.',
-      goalCheck:(code, output, inputVal) => {
-        if (!code.includes('range')) return {pass:false, msg:'❌ Use range(n) in your for loop: for i in range(n):'};
-        if (!code.includes('float')) return {pass:false, msg:'❌ Convert price input to float: price = float(input(...))'};
-        if (!code.includes('append')) return {pass:false, msg:'❌ Add each price to the cart: cart.append(price)'};
+        if (!code.includes('for') || !code.includes('in')) return {pass:false, msg:'❌ Use a for loop: for price in prices:'};
+        if (!code.includes('total') || !code.includes('0')) return {pass:false, msg:'❌ Create a total variable set to 0 before the loop.'};
+        if (!(code.includes('total += ') || code.includes('total = total +'))) return {pass:false, msg:'❌ Inside the loop, add each price to total using total += price.'};
         if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
-        if (!output.includes('items added')) return {pass:false, msg:'❌ The program should print how many items were added.'};
-        return {pass:true, msg:'✅ Excellent! range(n) loops exactly n times, collecting each price and adding it to the cart.'};
+        if (!output.includes('62.97') && !output.includes('62.970000')) return {pass:false, msg:'❌ The total for the given prices should be 62.97. Check your loop.'};
+        return {pass:true, msg:'✅ Your loop correctly accumulates the total. This is one of the most important patterns in Python!'};
       }
     },
 
-    // ── STEP 4 ── Discount logic
+    // ── STEP 3: ROUND / FORMAT ────────────────────────────────
     {
-      id:4, title:'Applying a Discount', xp:30,
-      badge:null,
-      content:`<p class="step-desc">Now add a <strong>discount</strong>: if the subtotal is £20 or more, apply 10%. This combines the if/elif/else skills from Mission 1 with your new list skills.</p>
-<div class="code-block">subtotal = <span class="fn">round</span>(<span class="fn">sum</span>(cart), <span class="num">2</span>)
+      id:3, title:'Rounding to 2 Decimal Places', xp:20, badge:null,
+      content:`<p class="step-desc">Floating point maths in Python can produce long decimals like <code>62.970000000000006</code>. For a receipt, we want clean values like <code>62.97</code>. Use <code>round()</code> to fix this.</p>
+<div class="code-block">total = <span class="num">62.970000000000006</span>
+total = <span class="fn">round</span>(total, <span class="num">2</span>)
+<span class="fn">print</span>(total)  <span class="cm"># 62.97</span></div>
+<div class="callout">🔢 <code>round(value, 2)</code> rounds a number to <strong>2 decimal places</strong> — exactly what you need for currency. The second argument is the number of decimal places to keep.</div>
+<p class="step-desc">You can also format the output directly inside an f-string using <code>:.2f</code>:</p>
+<div class="code-block">total = <span class="num">62.97</span>
+<span class="fn">print</span>(<span class="str">f"Total: £{total:.2f}"</span>)  <span class="cm"># Total: £62.97</span></div>
+<div class="callout warn">⚠️ <code>:.2f</code> only affects how the number is <em>displayed</em> in an f-string. The variable itself is unchanged. Use <code>round()</code> if you need the actual rounded value for further calculations.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What does <code>round(7.8654, 2)</code> return?',
+        options:['7.86','7.87','7.9','7.8654'],
+        correct:1,
+        hint:'round() looks at the third decimal place to decide whether to round up or down. 7.8654 — the third decimal is 5, so the second decimal rounds up from 6 to 7.',
+        hintCost:5
+      },
+      starterCode:`prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+total = 0
 
-<span class="kw">if</span> subtotal >= <span class="num">20</span>:
+for price in prices:
+    total += price
+
+# Round total to 2 decimal places
+total = round(total, 2)
+
+# Print with £ symbol using f-string formatting
+print(f"Subtotal: £{total:.2f}")`,
+      goal:'Round the total to 2 decimal places using round(). Print it with a £ symbol using an f-string.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('round(')) return {pass:false, msg:'❌ Use round(total, 2) to round to 2 decimal places.'};
+        if (!code.includes('£')) return {pass:false, msg:'❌ Include a £ symbol in your print output.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        if (!output.includes('62.97')) return {pass:false, msg:'❌ The rounded total should be 62.97. Check your round() call.'};
+        return {pass:true, msg:'✅ Clean currency output — round() and f-strings make your receipt look professional.'};
+      }
+    },
+
+    // ── STEP 4: IF STATEMENT / DISCOUNT ──────────────────────
+    {
+      id:4, title:'Applying a Discount', xp:25, badge:null,
+      content:`<p class="step-desc">Now add a rule: if the subtotal is <strong>over £50</strong>, the customer gets a <strong>10% discount</strong>. This is a classic real-world use of an <code>if</code> statement.</p>
+<div class="code-block">subtotal = <span class="num">62.97</span>
+
+<span class="kw">if</span> subtotal > <span class="num">50</span>:
     discount = <span class="fn">round</span>(subtotal * <span class="num">0.10</span>, <span class="num">2</span>)
+    total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
+    <span class="fn">print</span>(<span class="str">f"Discount: £{discount:.2f}"</span>)
 <span class="kw">else</span>:
     discount = <span class="num">0</span>
+    total = subtotal
+    <span class="fn">print</span>(<span class="str">"No discount applied."</span>)
 
-total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
-
-<span class="fn">print</span>(<span class="str">f"Subtotal:        £</span><span class="num">{subtotal}</span><span class="str">"</span>)
-<span class="fn">print</span>(<span class="str">f"Discount (10%):  £</span><span class="num">{discount}</span><span class="str">"</span>)
-<span class="fn">print</span>(<span class="str">f"Total:           £</span><span class="num">{total}</span><span class="str">"</span>)</div>
-<div class="callout">💡 <code>subtotal * 0.10</code> calculates 10%. You could also write <code>subtotal * 10 / 100</code> — both give the same result.</div>`,
+<span class="fn">print</span>(<span class="str">f"Total: £{total:.2f}"</span>)</div>
+<div class="callout success">✅ 10% of a value = multiply by <code>0.10</code>. This is the same as dividing by 10.</div>`,
       challenge:{
         type:'mcq',
-        q:'A customer\'s subtotal is £15.00. Does the 10% discount apply?',
-        options:['Yes — 10% is always applied',
-                 'No — subtotal must be ≥ £20 for the discount',
-                 'Yes — any order over £10 gets a discount',
-                 'No — discounts only apply to orders over £50'],
+        q:'A subtotal is £45.00. Which branch of the discount code runs?',
+        options:[
+          'The if branch — discount is applied',
+          'The else branch — no discount applied',
+          'Both branches run',
+          'Neither branch runs'
+        ],
         correct:1,
-        hint:'Look at the condition: if subtotal >= 20. Is £15.00 greater than or equal to £20? No — so the else branch runs and discount = 0.',
+        hint:'The condition is subtotal > 50. £45.00 is not greater than 50, so the if condition is False — Python runs the else branch instead.',
         hintCost:5
       },
-      starterCode:`cart = [5.99, 12.50, 3.75]
-subtotal = round(sum(cart), 2)
+      starterCode:`prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+total = 0
 
-# Add discount logic:
-# If subtotal is 20 or more, discount = round(subtotal * 0.10, 2)
-# Otherwise, discount = 0
+for price in prices:
+    total += price
 
+subtotal = round(total, 2)
 
-total = round(subtotal - discount, 2)
-
-print(f"Subtotal:       £{subtotal}")
-print(f"Discount (10%): £{discount}")
-print(f"Total:          £{total}")`,
-      goal:'Add the if/else to calculate the discount. With prices [5.99, 12.50, 3.75], subtotal = £22.24 which is ≥ £20, so discount should be £2.22.',
-      goalCheck:(code, output, inputVal) => {
-        if (!code.includes('if') || !code.includes('discount')) return {pass:false, msg:'❌ Add an if statement to check if subtotal >= 20 and calculate the discount.'};
-        if (!code.includes('0.10') && !code.includes('0.1') && !code.includes('10/100'))
-          return {pass:false, msg:'❌ Calculate the discount as 10%: discount = round(subtotal * 0.10, 2)'};
-        if (!output.includes('22.24')) return {pass:false, msg:'❌ The subtotal should be £22.24. Check your cart prices.'};
-        if (!output.includes('2.22') && !output.includes('2.2')) return {pass:false, msg:'❌ The discount should be £2.22 (10% of £22.24). Check your discount formula.'};
-        return {pass:true, msg:'✅ Discount logic working! Subtotal £22.24 ≥ £20, so 10% discount = £2.22, total = £20.02.'};
-      }
-    },
-
-    // ── STEP 5 ── Print the receipt
-    {
-      id:5, title:'Printing the Receipt', xp:35,
-      badge:{icon:'🧾',name:'Receipt Printer',desc:'Built a formatted shopping receipt'},
-      content:`<p class="step-desc">The final step: print a nicely formatted receipt. Loop through the cart items and print each one, then show the totals.</p>
-<div class="code-block">items = [<span class="str">"Apple"</span>, <span class="str">"Bread"</span>, <span class="str">"Milk"</span>]
-prices = [<span class="num">0.99</span>, <span class="num">1.20</span>, <span class="num">1.35</span>]
-
-<span class="fn">print</span>(<span class="str">"--- Receipt ---"</span>)
-<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(items)):
-    <span class="fn">print</span>(<span class="str">f"</span><span class="num">{items[i]}</span><span class="str">: £</span><span class="num">{prices[i]}</span><span class="str">"</span>)
-
-subtotal = <span class="fn">round</span>(<span class="fn">sum</span>(prices), <span class="num">2</span>)
-<span class="fn">print</span>(<span class="str">f"---------------"</span>)
-<span class="fn">print</span>(<span class="str">f"Total: £</span><span class="num">{subtotal}</span><span class="str">"</span>)</div>
-<div class="callout">💡 <code>range(len(items))</code> gives indices 0, 1, 2… so you can access both <code>items[i]</code> and <code>prices[i]</code> at the same position — a common Python pattern for paired lists.</div>`,
-      challenge:{
-        type:'mcq',
-        q:'Why do we use <code style="color:var(--accent2)">range(len(items))</code> instead of just <code style="color:var(--accent2)">for item in items</code>?',
-        options:['range(len()) is always faster than a regular for loop',
-                 'So we get the index i and can access both items[i] and prices[i] at the same time',
-                 'for item in items would skip the first item',
-                 'range(len()) lets us use f-strings inside the loop'],
-        correct:1,
-        hint:'for item in items gives you the item value, but not its position number. To get both the item name AND its matching price, you need the index i to look up prices[i].',
-        hintCost:5
-      },
-      starterCode:`items = ["Apple", "Bread", "Milk"]
-prices = [0.99, 1.20, 1.35]
-
-print("--- Receipt ---")
-
-# Loop through and print each item with its price:
-for i in range(len(items)):
-    print(f"{items[i]}: £{prices[i]}")
-
-subtotal = round(sum(prices), 2)
-print("---------------")
-print(f"Total: £{subtotal}")`,
-      goal:'Run the starter code to see the receipt. Then modify it to also show a 10% discount if subtotal ≥ £2.00 (low threshold so you can test it with these prices).',
-      goalCheck:(code, output, inputVal) => {
-        if (!code.includes('range(len(')) return {pass:false, msg:'❌ Use range(len(items)) in your loop: for i in range(len(items)):'};
-        if (!output.includes('Receipt')) return {pass:false, msg:'❌ Print the receipt header: print("--- Receipt ---")'};
-        if (!output.includes('Apple')) return {pass:false, msg:'❌ The loop should print each item. Check items[i] is in your print statement.'};
-        if (!output.includes('Total')) return {pass:false, msg:'❌ Print the total at the end of the receipt.'};
-        if (!output.includes('3.54') && !output.includes('3.53')) return {pass:false, msg:'❌ The total should be £3.54 (0.99+1.20+1.35). Check your sum().'};
-        return {pass:true, msg:'✅ Receipt complete! range(len(items)) lets you access both lists by index simultaneously.'};
-      }
-    },
-
-    // ── STEP 6 ── Full program
-    {
-      id:6, title:'The Complete Shopping Cart', xp:45,
-      badge:{icon:'🛒',name:'Cart Champion',desc:'Built a complete shopping cart program!'},
-      content:`<p class="step-desc">Put it all together — the complete shopping cart program: user input, list building, discount logic, and a formatted receipt.</p>
-<div class="code-block">cart = []
-n = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"How many items? "</span>))
-
-<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n):
-    price = <span class="fn">float</span>(<span class="fn">input</span>(<span class="str">f"Price of item </span><span class="num">{i+1}</span><span class="str">: £"</span>))
-    cart.<span class="fn">append</span>(price)
-
-subtotal = <span class="fn">round</span>(<span class="fn">sum</span>(cart), <span class="num">2</span>)
-
-<span class="kw">if</span> subtotal >= <span class="num">20</span>:
-    discount = <span class="fn">round</span>(subtotal * <span class="num">0.10</span>, <span class="num">2</span>)
-<span class="kw">else</span>:
-    discount = <span class="num">0</span>
-
-total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
-
-<span class="fn">print</span>(<span class="str">"--- Shopping Cart ---"</span>)
-<span class="kw">for</span> i, price <span class="kw">in</span> <span class="fn">enumerate</span>(cart):
-    <span class="fn">print</span>(<span class="str">f"Item </span><span class="num">{i+1}</span><span class="str">: £</span><span class="num">{price}</span><span class="str">"</span>)
-<span class="fn">print</span>(<span class="str">f"Subtotal: £</span><span class="num">{subtotal}</span><span class="str">"</span>)
-<span class="fn">print</span>(<span class="str">f"Discount: £</span><span class="num">{discount}</span><span class="str">"</span>)
-<span class="fn">print</span>(<span class="str">f"Total:    £</span><span class="num">{total}</span><span class="str">"</span>)</div>
-<div class="callout success">✅ The complete program uses every skill from this mission: lists, append(), for loops, range(), sum(), round(), float input, if/else, and f-strings.</div>`,
-      challenge:{
-        type:'mcq',
-        q:'Looking at the complete program — which line adds the discount condition?',
-        options:['cart.append(price)',
-                 'if subtotal >= 20: discount = round(subtotal * 0.10, 2)',
-                 'subtotal = round(sum(cart), 2)',
-                 'for i in range(n):'],
-        correct:1,
-        hint:'The discount only applies when the subtotal meets the threshold. Which line checks the subtotal against £20 and calculates 10%?',
-        hintCost:5
-      },
-      starterCode:`cart = []
-n = int(input("How many items? "))
-
-for i in range(n):
-    price = float(input(f"Price of item {i+1}: £"))
-    cart.append(price)
-
-subtotal = round(sum(cart), 2)
-
-if subtotal >= 20:
+# If subtotal is over 50, apply a 10% discount
+if subtotal > 50:
     discount = round(subtotal * 0.10, 2)
+    total = round(subtotal - discount, 2)
 else:
     discount = 0
+    total = subtotal
 
+print(f"Subtotal: £{subtotal:.2f}")
+print(f"Discount: £{discount:.2f}")
+print(f"Total: £{total:.2f}")`,
+      goal:'Add an if/else that applies a 10% discount when subtotal > 50. Print subtotal, discount, and total.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('if') || !code.includes('50')) return {pass:false, msg:'❌ Add an if statement that checks if subtotal > 50.'};
+        if (!code.includes('0.10') && !code.includes('0.1') && !code.includes('/ 10') && !code.includes('/10')) return {pass:false, msg:'❌ Calculate 10% discount using subtotal * 0.10.'};
+        if (!code.includes('else')) return {pass:false, msg:'❌ Add an else branch for when no discount applies.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        if (!output.includes('56.67') && !output.includes('56.68')) return {pass:false, msg:'❌ After 10% discount, the total for £62.97 should be £56.67. Check your calculation.'};
+        return {pass:true, msg:'✅ Discount logic working correctly — your if/else handles both cases.'};
+      }
+    },
+
+    // ── STEP 5: DEFINING A FUNCTION ───────────────────────────
+    {
+      id:5, title:'Writing a Function', xp:30, badge:{icon:'⚙️',name:'Function Builder',desc:'Defined and called your own Python function'},
+      content:`<p class="step-desc">So far the discount logic is written inline. Now let's move it into a <strong>function</strong> — a reusable, named block of code that takes inputs and returns an output.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">apply_discount</span>(subtotal):
+    <span class="kw">if</span> subtotal > <span class="num">50</span>:
+        discount = <span class="fn">round</span>(subtotal * <span class="num">0.10</span>, <span class="num">2</span>)
+        <span class="kw">return</span> discount
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="num">0</span>
+
+<span class="cm"># Calling the function:</span>
+disc = <span class="fn">apply_discount</span>(<span class="num">62.97</span>)
+<span class="fn">print</span>(disc)  <span class="cm"># 6.30</span></div>
+<div class="callout">⚙️ <strong>def</strong> defines the function. The <strong>parameter</strong> <code>subtotal</code> is a local variable that receives whatever value you pass in. <strong>return</strong> sends the result back to the caller.</div>
+<div class="callout warn">⚠️ A function only <em>runs</em> when you <em>call</em> it. Writing <code>def apply_discount(subtotal):</code> just defines it — you need <code>apply_discount(62.97)</code> to actually execute it.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What is the difference between <strong>defining</strong> a function and <strong>calling</strong> a function?',
+        options:[
+          'There is no difference — they are the same thing',
+          'Defining creates the function; calling executes it',
+          'Calling creates the function; defining executes it',
+          'You can only define a function once but call it once too'
+        ],
+        correct:1,
+        hint:'def just stores the instructions. Calling the function by name (with brackets) is what actually runs those instructions.',
+        hintCost:5
+      },
+      starterCode:`# Define a function called apply_discount
+# It takes subtotal as a parameter
+# Returns the discount amount (10% if subtotal > 50, else 0)
+
+def apply_discount(subtotal):
+    if subtotal > 50:
+        discount = round(subtotal * 0.10, 2)
+        return discount
+    else:
+        return 0
+
+# Test it with two values
+print(apply_discount(62.97))   # should print 6.3
+print(apply_discount(30.00))   # should print 0`,
+      goal:'Define apply_discount(subtotal) that returns 10% of subtotal if > 50, else 0. Test it with two values.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('def apply_discount')) return {pass:false, msg:'❌ Define a function called apply_discount(subtotal).'};
+        if (!code.includes('return')) return {pass:false, msg:'❌ Your function needs a return statement.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        const lines = output.trim().split('\n').map(l => l.trim());
+        const hasDiscount = lines.some(l => l === '6.3' || l === '6.30' || l.includes('6.3'));
+        const hasZero = lines.some(l => l === '0' || l === '0.0');
+        if (!hasDiscount) return {pass:false, msg:'❌ apply_discount(62.97) should return 6.3. Check your 10% calculation.'};
+        if (!hasZero) return {pass:false, msg:'❌ apply_discount(30.00) should return 0 (no discount below £50).'};
+        return {pass:true, msg:'✅ Function defined and working — it correctly returns 6.3 for £62.97 and 0 for £30.00.'};
+      }
+    },
+
+    // ── STEP 6: FUNCTION WITH MULTIPLE PARAMS ─────────────────
+    {
+      id:6, title:'Functions with Multiple Parameters', xp:30, badge:null,
+      content:`<p class="step-desc">Functions can take <strong>more than one parameter</strong>. This makes them flexible — you can reuse the same function with different values each time.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">apply_discount</span>(subtotal, threshold, rate):
+    <span class="kw">if</span> subtotal > threshold:
+        <span class="kw">return</span> <span class="fn">round</span>(subtotal * rate, <span class="num">2</span>)
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="num">0</span>
+
+<span class="cm"># 10% off orders over £50</span>
+disc1 = <span class="fn">apply_discount</span>(<span class="num">62.97</span>, <span class="num">50</span>, <span class="num">0.10</span>)
+<span class="cm"># 20% off orders over £100</span>
+disc2 = <span class="fn">apply_discount</span>(<span class="num">120.00</span>, <span class="num">100</span>, <span class="num">0.20</span>)
+<span class="fn">print</span>(disc1)  <span class="cm"># 6.3</span>
+<span class="fn">print</span>(disc2)  <span class="cm"># 24.0</span></div>
+<div class="callout">🔢 Parameters are matched <strong>by position</strong> — the first argument goes into the first parameter, second into second, and so on.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'In <code>apply_discount(62.97, 50, 0.10)</code>, what value does the parameter <code>rate</code> receive?',
+        options:['62.97','50','0.10','None'],
+        correct:2,
+        hint:'Arguments are matched by position. The function definition is apply_discount(subtotal, threshold, rate). The third argument (0.10) maps to the third parameter (rate).',
+        hintCost:5
+      },
+      starterCode:`# Upgrade apply_discount to take 3 parameters:
+# subtotal, threshold, rate
+# Return round(subtotal * rate, 2) if subtotal > threshold, else 0
+
+def apply_discount(subtotal, threshold, rate):
+    if subtotal > threshold:
+        return round(subtotal * rate, 2)
+    else:
+        return 0
+
+# Test: 10% off over £50
+print(apply_discount(62.97, 50, 0.10))   # 6.3
+
+# Test: 20% off over £100
+print(apply_discount(120.00, 100, 0.20)) # 24.0
+
+# Test: no discount (below threshold)
+print(apply_discount(30.00, 50, 0.10))   # 0`,
+      goal:'Update apply_discount to accept subtotal, threshold and rate. Test it with the three calls above.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('def apply_discount')) return {pass:false, msg:'❌ Define apply_discount with three parameters: subtotal, threshold, rate.'};
+        if ((code.match(/def apply_discount\s*\([^)]*\)/)||[''])[0].split(',').length < 3) return {pass:false, msg:'❌ Your function needs three parameters: subtotal, threshold, rate.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        const lines = output.trim().split('\n').map(l => l.trim());
+        const has63 = lines.some(l => l === '6.3' || l === '6.30' || l.includes('6.3'));
+        const has24 = lines.some(l => l === '24.0' || l === '24' || l.includes('24.0'));
+        const hasZero = lines.some(l => l === '0' || l === '0.0');
+        if (!has63) return {pass:false, msg:'❌ apply_discount(62.97, 50, 0.10) should return 6.3.'};
+        if (!has24) return {pass:false, msg:'❌ apply_discount(120.00, 100, 0.20) should return 24.0.'};
+        if (!hasZero) return {pass:false, msg:'❌ apply_discount(30.00, 50, 0.10) should return 0.'};
+        return {pass:true, msg:'✅ Multi-parameter function working — the same function handles different discount rules.'};
+      }
+    },
+
+    // ── STEP 7: PUTTING IT TOGETHER ───────────────────────────
+    {
+      id:7, title:'Building the Receipt', xp:35, badge:{icon:'🧾',name:'Receipt Ready',desc:'Combined lists, loops and functions into a program'},
+      content:`<p class="step-desc">Now combine everything — the list, the loop, the rounding, and the function — into a complete program that prints a formatted receipt.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">apply_discount</span>(subtotal, threshold, rate):
+    <span class="kw">if</span> subtotal > threshold:
+        <span class="kw">return</span> <span class="fn">round</span>(subtotal * rate, <span class="num">2</span>)
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="num">0</span>
+
+prices = [<span class="num">12.99</span>, <span class="num">4.50</span>, <span class="num">24.99</span>, <span class="num">5.99</span>, <span class="num">14.50</span>]
+subtotal = <span class="num">0</span>
+
+<span class="kw">for</span> price <span class="kw">in</span> prices:
+    subtotal += price
+
+subtotal = <span class="fn">round</span>(subtotal, <span class="num">2</span>)
+discount = <span class="fn">apply_discount</span>(subtotal, <span class="num">50</span>, <span class="num">0.10</span>)
+total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
+
+<span class="fn">print</span>(<span class="str">f"Items: {len(prices)}"</span>)
+<span class="fn">print</span>(<span class="str">f"Subtotal: £{subtotal:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"Discount (10%): £{discount:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"Total: £{total:.2f}"</span>)</div>`,
+      challenge:{
+        type:'mcq',
+        q:'In the receipt program, why is <code>apply_discount</code> defined <em>before</em> the list and loop code?',
+        options:[
+          'Python requires all functions to be at the top of the file',
+          'It makes no difference — Python reads the whole file first',
+          'Functions must be defined before they are called',
+          'The loop would crash if the function came after it'
+        ],
+        correct:2,
+        hint:'Python executes code top to bottom. If you try to call apply_discount() before the def block has been read, Python will raise a NameError because it does not know the function exists yet.',
+        hintCost:5
+      },
+      starterCode:`def apply_discount(subtotal, threshold, rate):
+    if subtotal > threshold:
+        return round(subtotal * rate, 2)
+    else:
+        return 0
+
+prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+subtotal = 0
+
+for price in prices:
+    subtotal += price
+
+subtotal = round(subtotal, 2)
+discount = apply_discount(subtotal, 50, 0.10)
 total = round(subtotal - discount, 2)
 
-print("--- Shopping Cart ---")
-for i in range(len(cart)):
-    print(f"Item {i+1}: £{cart[i]}")
-print(f"Subtotal: £{subtotal}")
-print(f"Discount: £{discount}")
-print(f"Total:    £{total}")`,
-      goal:'Run with input: 3 items, prices 5.99, 12.50, 3.75. Subtotal = £22.24, discount = £2.22, total = £20.02.',
+print(f"Items: {len(prices)}")
+print(f"Subtotal: £{subtotal:.2f}")
+print(f"Discount (10%): £{discount:.2f}")
+print(f"Total: £{total:.2f}")`,
+      goal:'Assemble the full receipt program. It should print Items, Subtotal, Discount and Total.',
       goalCheck:(code, output, inputVal) => {
-        if (!code.includes('append')) return {pass:false, msg:'❌ Use cart.append(price) to add prices to the cart.'};
-        if (!code.includes('sum')) return {pass:false, msg:'❌ Use sum(cart) to calculate the subtotal.'};
-        if (!code.includes('0.10') && !code.includes('0.1')) return {pass:false, msg:'❌ Calculate 10% discount: subtotal * 0.10'};
+        if (!code.includes('def apply_discount')) return {pass:false, msg:'❌ Include the apply_discount function definition.'};
+        if (!code.includes('for') || !code.includes('in prices')) return {pass:false, msg:'❌ Use a for loop to sum the prices list.'};
+        if (!output.includes('Items:')) return {pass:false, msg:'❌ Print the number of items using f"Items: {len(prices)}".'};
+        if (!output.includes('Subtotal:')) return {pass:false, msg:'❌ Print the subtotal with a £ symbol.'};
+        if (!output.includes('Discount')) return {pass:false, msg:'❌ Print the discount amount.'};
+        if (!output.includes('Total:')) return {pass:false, msg:'❌ Print the final total.'};
         if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
-        if (!output.includes('Shopping Cart')) return {pass:false, msg:'❌ Print the receipt header: "--- Shopping Cart ---"'};
-        if (!output.includes('Subtotal')) return {pass:false, msg:'❌ Print the subtotal in the receipt.'};
-        if (!output.includes('Total')) return {pass:false, msg:'❌ Print the final total in the receipt.'};
-        return {pass:true, msg:'✅ Mission Complete! You built a full shopping cart: input → list building → discount logic → formatted receipt. All Mission 2 skills mastered!'};
+        if (!output.includes('62.97')) return {pass:false, msg:'❌ Subtotal should be £62.97. Check your loop and rounding.'};
+        if (!output.includes('56.67') && !output.includes('56.68')) return {pass:false, msg:'❌ Total after discount should be £56.67. Check apply_discount is called correctly.'};
+        return {pass:true, msg:'✅ Complete receipt program working — lists, loops, functions and f-strings all working together!'};
+      }
+    },
+
+    // ── STEP 8: FUNCTION RETURNING MULTIPLE VALUES ────────────
+    {
+      id:8, title:'Returning Multiple Values', xp:35, badge:null,
+      content:`<p class="step-desc">Python functions can <strong>return more than one value</strong> at once using a tuple. The caller can unpack them into separate variables on one line.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">calculate_cart</span>(prices, threshold, rate):
+    subtotal = <span class="fn">round</span>(<span class="fn">sum</span>(prices), <span class="num">2</span>)
+    discount = <span class="fn">round</span>(subtotal * rate, <span class="num">2</span>) <span class="kw">if</span> subtotal > threshold <span class="kw">else</span> <span class="num">0</span>
+    total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
+    <span class="kw">return</span> subtotal, discount, total   <span class="cm"># returns a tuple</span>
+
+prices = [<span class="num">12.99</span>, <span class="num">4.50</span>, <span class="num">24.99</span>, <span class="num">5.99</span>, <span class="num">14.50</span>]
+sub, disc, tot = <span class="fn">calculate_cart</span>(prices, <span class="num">50</span>, <span class="num">0.10</span>)
+<span class="fn">print</span>(<span class="str">f"Subtotal: £{sub:.2f}, Discount: £{disc:.2f}, Total: £{tot:.2f}"</span>)</div>
+<div class="callout">📦 <code>return subtotal, discount, total</code> packages three values together. <code>sub, disc, tot = calculate_cart(...)</code> <strong>unpacks</strong> them into three variables in one go. This is called <em>tuple unpacking</em>.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'A function ends with <code>return x, y, z</code>. You call it with <code>a, b, c = my_func()</code>. What is stored in <code>b</code>?',
+        options:['x','y','z','All three values'],
+        correct:1,
+        hint:'Tuple unpacking assigns by position. a gets x (first), b gets y (second), c gets z (third).',
+        hintCost:5
+      },
+      starterCode:`# Write a function called calculate_cart that:
+# - takes prices (list), threshold, rate as parameters
+# - uses sum() to get the subtotal
+# - calculates discount (rate% if subtotal > threshold, else 0)
+# - returns subtotal, discount, total as three values
+
+def calculate_cart(prices, threshold, rate):
+    subtotal = round(sum(prices), 2)
+    discount = round(subtotal * rate, 2) if subtotal > threshold else 0
+    total = round(subtotal - discount, 2)
+    return subtotal, discount, total
+
+# Unpack the three return values
+prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+sub, disc, tot = calculate_cart(prices, 50, 0.10)
+
+print(f"Subtotal: £{sub:.2f}")
+print(f"Discount: £{disc:.2f}")
+print(f"Total: £{tot:.2f}")`,
+      goal:'Write calculate_cart() that returns subtotal, discount and total. Unpack and print all three.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('def calculate_cart')) return {pass:false, msg:'❌ Define a function called calculate_cart.'};
+        if (!code.includes('return')) return {pass:false, msg:'❌ Your function needs a return statement.'};
+        const returnLine = code.split('\n').find(l => l.trim().startsWith('return'));
+        if (returnLine && returnLine.split(',').length < 3) return {pass:false, msg:'❌ Return three values: return subtotal, discount, total.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        if (!output.includes('62.97')) return {pass:false, msg:'❌ Subtotal should be £62.97.'};
+        if (!output.includes('6.3')) return {pass:false, msg:'❌ Discount should be £6.30 (10% of £62.97).'};
+        if (!output.includes('56.67') && !output.includes('56.68')) return {pass:false, msg:'❌ Total should be £56.67.'};
+        return {pass:true, msg:'✅ Tuple unpacking working — one function call returns three values at once!'};
+      }
+    },
+
+    // ── STEP 9: FINAL VERSION ─────────────────────────────────
+    {
+      id:9, title:'Final Version: Full Receipt', xp:40, badge:{icon:'🛒',name:'Cart Coder',desc:'Built a complete Python shopping cart program!'},
+      content:`<p class="step-desc">Bring it all together into the polished final version. Add a second function <code>print_receipt</code> that takes the cart data and prints a formatted receipt — separating the logic from the display.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">calculate_cart</span>(prices, threshold, rate):
+    subtotal = <span class="fn">round</span>(<span class="fn">sum</span>(prices), <span class="num">2</span>)
+    discount = <span class="fn">round</span>(subtotal * rate, <span class="num">2</span>) <span class="kw">if</span> subtotal > threshold <span class="kw">else</span> <span class="num">0</span>
+    total = <span class="fn">round</span>(subtotal - discount, <span class="num">2</span>)
+    <span class="kw">return</span> subtotal, discount, total
+
+<span class="kw">def</span> <span class="fn">print_receipt</span>(prices, subtotal, discount, total):
+    <span class="fn">print</span>(<span class="str">"--- RECEIPT ---"</span>)
+    <span class="fn">print</span>(<span class="str">f"Items:    {len(prices)}"</span>)
+    <span class="fn">print</span>(<span class="str">f"Subtotal: £{subtotal:.2f}"</span>)
+    <span class="kw">if</span> discount > <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">f"Discount: £{discount:.2f}"</span>)
+    <span class="fn">print</span>(<span class="str">f"Total:    £{total:.2f}"</span>)
+    <span class="fn">print</span>(<span class="str">"---------------"</span>)
+
+prices = [<span class="num">12.99</span>, <span class="num">4.50</span>, <span class="num">24.99</span>, <span class="num">5.99</span>, <span class="num">14.50</span>]
+sub, disc, tot = <span class="fn">calculate_cart</span>(prices, <span class="num">50</span>, <span class="num">0.10</span>)
+<span class="fn">print_receipt</span>(prices, sub, disc, tot)</div>
+<div class="callout success">✅ <strong>Separation of concerns</strong> — <code>calculate_cart</code> handles the maths, <code>print_receipt</code> handles the display. This makes code easier to test, reuse, and change.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Why is it good practice to have one function for calculations and a separate function for printing?',
+        options:[
+          'Python runs separate functions faster',
+          'It separates logic from display, making each part easier to test and change',
+          'You can only call a function from one place if it does both things',
+          'It is not good practice — everything should be in one function'
+        ],
+        correct:1,
+        hint:'Separation of concerns means each function has one job. If you want to change how the receipt looks, you only edit print_receipt. If the discount rule changes, you only edit calculate_cart.',
+        hintCost:5
+      },
+      starterCode:`def calculate_cart(prices, threshold, rate):
+    subtotal = round(sum(prices), 2)
+    discount = round(subtotal * rate, 2) if subtotal > threshold else 0
+    total = round(subtotal - discount, 2)
+    return subtotal, discount, total
+
+def print_receipt(prices, subtotal, discount, total):
+    print("--- RECEIPT ---")
+    print(f"Items:    {len(prices)}")
+    print(f"Subtotal: £{subtotal:.2f}")
+    if discount > 0:
+        print(f"Discount: £{discount:.2f}")
+    print(f"Total:    £{total:.2f}")
+    print("---------------")
+
+prices = [12.99, 4.50, 24.99, 5.99, 14.50]
+sub, disc, tot = calculate_cart(prices, 50, 0.10)
+print_receipt(prices, sub, disc, tot)`,
+      goal:'Write both functions. Call print_receipt to display a formatted receipt with header and footer lines.',
+      goalCheck:(code, output, inputVal) => {
+        if (!code.includes('def calculate_cart')) return {pass:false, msg:'❌ Include the calculate_cart function.'};
+        if (!code.includes('def print_receipt')) return {pass:false, msg:'❌ Add a second function called print_receipt.'};
+        if (output.includes('Error')) return {pass:false, msg:'❌ There is an error — check the output panel.'};
+        if (!output.includes('RECEIPT') && !output.includes('Receipt') && !output.includes('receipt')) return {pass:false, msg:'❌ print_receipt should print a header like "--- RECEIPT ---".'};
+        if (!output.includes('Items')) return {pass:false, msg:'❌ Print the number of items in print_receipt.'};
+        if (!output.includes('62.97')) return {pass:false, msg:'❌ Subtotal should be £62.97. Check calculate_cart.'};
+        if (!output.includes('56.67') && !output.includes('56.68')) return {pass:false, msg:'❌ Total should be £56.67. Check the discount calculation.'};
+        return {pass:true, msg:'✅ Mission complete! Two clean functions, a proper receipt, and all the key Python concepts — lists, loops, functions, f-strings. Excellent work!'};
       }
     }
   ]
@@ -647,14 +776,18 @@ let GS = {
   completedSteps:new Set(), badges:[],
   hintUsed:[], quizAnswered:new Set(), codeChecked:new Set()
 };
-let editors = {}; // CodeMirror instances keyed by step id
+let editors = {};
 
+// ═══════════════════════════════════════════════════════════
+//  PYLITE INTERPRETER (full — supports def, pass, return)
+// ═══════════════════════════════════════════════════════════
 function runPyLite(code, inputVal) {
   const inputLines = String(inputVal).split('\n');
   let inputIdx = 0;
   const output = [];
   let error = null;
   const vars = {};
+  const funcs = {};
 
   function pyInput(prompt) {
     if (prompt !== undefined && prompt !== '') output.push(String(prompt));
@@ -692,7 +825,6 @@ function runPyLite(code, inputVal) {
     return parts;
   }
 
-  // ── EXPRESSION EVALUATOR ──
   function evalExpr(expr) {
     expr = expr.trim();
     if (!expr) return '';
@@ -700,33 +832,40 @@ function runPyLite(code, inputVal) {
     // f-string
     if (expr.startsWith('f"') || expr.startsWith("f'")) {
       const inner = expr.slice(2, -1);
-      return inner.replace(/\{([^}]+)\}/g, (_, e) => String(evalExpr(e.trim())));
+      return inner.replace(/\{([^}]+)\}/g, (_, e) => {
+        const fmtM = e.match(/^(.+):\.(\d+)f$/);
+        if (fmtM) { const v = evalExpr(fmtM[1].trim()); return Number(v).toFixed(parseInt(fmtM[2])); }
+        return String(evalExpr(e.trim()));
+      });
     }
 
     // String literal
     if ((expr.startsWith('"') && expr.endsWith('"')) ||
         (expr.startsWith("'") && expr.endsWith("'"))) {
-      return expr.slice(1, -1)
-        .replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');
+      return expr.slice(1, -1).replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');
     }
 
-    // List literal [a, b, c]
+    // List literal
     if (expr.startsWith('[') && expr.endsWith(']')) {
       const inner = expr.slice(1, -1).trim();
       if (!inner) return [];
       return splitCommaArgs(inner).map(e => evalExpr(e));
     }
 
-    // True/False/None
     if (expr === 'True') return true;
     if (expr === 'False') return false;
     if (expr === 'None') return null;
 
-    // Numeric literal
     if (/^-?\d+$/.test(expr)) return parseInt(expr, 10);
     if (/^-?\d+\.\d+$/.test(expr)) return parseFloat(expr);
 
-    // List index: var[expr]
+    // Ternary: x if cond else y
+    const ternM = expr.match(/^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$/);
+    if (ternM) {
+      return evalExpr(ternM[2]) ? evalExpr(ternM[1]) : evalExpr(ternM[3]);
+    }
+
+    // List index
     const idxM = expr.match(/^([a-zA-Z_]\w*)\[(.+)\]$/);
     if (idxM) {
       const lst = evalExpr(idxM[1]);
@@ -737,7 +876,7 @@ function runPyLite(code, inputVal) {
       return lst[idx];
     }
 
-    // Method calls: var.method(args)
+    // Method calls
     const methodM = expr.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
     if (methodM) {
       const obj    = evalExpr(methodM[1]);
@@ -764,12 +903,12 @@ function runPyLite(code, inputVal) {
       throw `AttributeError: no method '${method}' on ${typeof obj}`;
     }
 
-    // Built-in function calls
+    // Built-in and user-defined function calls
     const call = expr.match(/^([a-zA-Z_]\w*)\((.*)\)$/s);
     if (call) {
-      const fname  = call[1];
+      const fname   = call[1];
       const argsStr = call[2].trim();
-      const args   = argsStr ? splitCommaArgs(argsStr).map(a => evalExpr(a)) : [];
+      const args    = argsStr ? splitCommaArgs(argsStr).map(a => evalExpr(a)) : [];
 
       if (fname === 'print')  { evalPrint(argsStr); return null; }
       if (fname === 'input')  { return pyInput(argsStr ? evalExpr(argsStr) : ''); }
@@ -783,13 +922,7 @@ function runPyLite(code, inputVal) {
       if (fname === 'min')    { const v=Array.isArray(args[0])?args[0]:args; return Math.min(...v); }
       if (fname === 'abs')    { return Math.abs(args[0]); }
       if (fname === 'round')  {
-        if (args.length > 1) {
-          const fixed = parseFloat(args[0].toFixed(args[1]));
-          // Preserve trailing zeros as Python does: round(90.0, 2) -> 90.0 not 90
-          const str = fixed.toFixed(args[1]);
-          // If all trailing chars are 0 except one decimal place, trim to 1
-          return parseFloat(str.replace(/(\.\d*[1-9])0+$/, '$1').replace(/\.0+$/, '.0'));
-        }
+        if (args.length > 1) return parseFloat(Number(args[0]).toFixed(args[1]));
         return Math.round(args[0]);
       }
       if (fname === 'range')  {
@@ -806,6 +939,21 @@ function runPyLite(code, inputVal) {
         if (Number.isInteger(v)&&typeof v==='number') return "<class 'int'>";
         if (typeof v==='number') return "<class 'float'>";
         return "<class 'str'>";
+      }
+
+      // User-defined function call
+      if (fname in funcs) {
+        const fn = funcs[fname];
+        const savedVars = {};
+        fn.params.forEach((p, idx) => {
+          if (p in vars) savedVars[p] = vars[p];
+          vars[p] = args[idx] !== undefined ? args[idx] : null;
+        });
+        const sig = {};
+        try { execLines(fn.body.map(l => l.slice(fn.indent + 4 > 0 ? fn.indent + 4 : 4)), 0, sig); }
+        catch(e) { if (e !== sig) throw e; }
+        fn.params.forEach(p => { if (p in savedVars) vars[p] = savedVars[p]; else delete vars[p]; });
+        return 'val' in sig ? sig.val : null;
       }
       throw `NameError: name '${fname}' is not defined`;
     }
@@ -828,7 +976,6 @@ function runPyLite(code, inputVal) {
           if (op==='=' && post==='=') continue;
           if (op==='/' && post==='/') continue;
           if (op==='-' && (pre===''||'(+-*/<>=![,'.includes(pre))) continue;
-          // Word operators need non-word boundaries
           if (['in','and','or','not in'].includes(op)) {
             if (/[a-zA-Z0-9_]/.test(pre) || /[a-zA-Z0-9_]/.test(post)) continue;
           }
@@ -846,8 +993,7 @@ function runPyLite(code, inputVal) {
       ['>=', (a,b)=>a>=b], ['<=', (a,b)=>a<=b],
       ['==', (a,b)=>a==b], ['!=', (a,b)=>a!=b],
       ['>', (a,b)=>a>b],   ['<', (a,b)=>a<b],
-      ['+', (a,b)=>(typeof a==='string'||typeof b==='string')?String(a)+String(b):
-                   (Array.isArray(a)&&Array.isArray(b))?[...a,...b]:a+b],
+      ['+', (a,b)=>(typeof a==='string'||typeof b==='string')?String(a)+String(b):(Array.isArray(a)&&Array.isArray(b))?[...a,...b]:a+b],
       ['-', (a,b)=>a-b], ['*', (a,b)=>a*b],
       ['//', (a,b)=>Math.floor(a/b)], ['/', (a,b)=>a/b], ['%', (a,b)=>a%b]
     ];
@@ -860,10 +1006,8 @@ function runPyLite(code, inputVal) {
       }
     }
 
-    // Unary not
     if (expr.startsWith('not ')) return !evalExpr(expr.slice(4));
 
-    // Variable
     if (/^[a-zA-Z_]\w*$/.test(expr)) {
       if (expr in vars) return vars[expr];
       throw `NameError: name '${expr}' is not defined`;
@@ -873,7 +1017,6 @@ function runPyLite(code, inputVal) {
   }
 
   function evalPrint(argsStr) {
-    // Handle sep= and end= kwargs
     const sepM = argsStr.match(/,\s*sep\s*=\s*["']([^"']*)["']/);
     const sep  = sepM ? sepM[1] : ' ';
     const clean = argsStr.replace(/,?\s*(sep|end)\s*=\s*["'][^"']*["']/g, '');
@@ -893,20 +1036,51 @@ function runPyLite(code, inputVal) {
     output.push(parts.join(sep));
   }
 
-  // ── FLAT BLOCK EXECUTOR ──
   const lines = code.split('\n');
 
-  function execLines(lineArr, baseIndent) {
+  function execLines(lineArr, baseIndent, returnSignal) {
     let i = 0;
     while (i < lineArr.length) {
-      const raw     = lineArr[i];
+      const raw      = lineArr[i];
       const stripped = stripComment(raw).trimEnd();
       const content  = stripped.trim();
       i++;
       if (!content) continue;
       const indent = getIndent(stripped);
 
-      // if/elif/else chain
+      // def
+      const defM = content.match(/^def\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*:$/);
+      if (defM) {
+        const fname  = defM[1];
+        const params = defM[2].trim() ? defM[2].split(',').map(p => p.trim()) : [];
+        const body   = [];
+        let ci = i;
+        while (ci < lineArr.length) {
+          const cl = stripComment(lineArr[ci]).trimEnd();
+          if (!cl.trim()) { body.push(lineArr[ci]); ci++; continue; }
+          if (getIndent(cl) <= indent) break;
+          body.push(lineArr[ci]); ci++;
+        }
+        i = ci;
+        funcs[fname] = { params, body, indent };
+        continue;
+      }
+
+      // pass
+      if (content === 'pass') continue;
+
+      // return
+      const retM = content.match(/^return\s*(.*)$/);
+      if (retM && returnSignal) {
+        returnSignal.val = retM[1].trim() ? evalExpr(retM[1].trim()) : null;
+        // Handle tuple return: a, b, c
+        if (retM[1].trim().includes(',') && !retM[1].trim().startsWith('[')) {
+          returnSignal.val = splitCommaArgs(retM[1].trim()).map(v => evalExpr(v.trim()));
+        }
+        throw returnSignal;
+      }
+
+      // if/elif/else
       if (/^(if|elif)\s+.+:$/.test(content) || /^else\s*:$/.test(content)) {
         const chain = [];
         let ci = i - 1;
@@ -931,7 +1105,7 @@ function runPyLite(code, inputVal) {
         i = ci;
         for (const branch of chain) {
           if (branch.cond === null || !!evalExpr(branch.cond)) {
-            execLines(branch.body.map(l => l.slice(indent+4)), 0);
+            execLines(branch.body.map(l => l.slice(indent+4)), 0, returnSignal);
             break;
           }
         }
@@ -955,7 +1129,7 @@ function runPyLite(code, inputVal) {
         const iter = Array.isArray(iterable) ? iterable : [];
         for (const val of iter) {
           vars[varName] = val;
-          execLines(body.map(l => l.slice(indent+4)), 0);
+          execLines(body.map(l => l.slice(indent+4)), 0, returnSignal);
         }
         continue;
       }
@@ -974,12 +1148,22 @@ function runPyLite(code, inputVal) {
         i = ci;
         let guard = 0;
         while (evalExpr(whileM[1]) && guard++ < 1000) {
-          execLines(body.map(l => l.slice(indent+4)), 0);
+          execLines(body.map(l => l.slice(indent+4)), 0, returnSignal);
         }
         continue;
       }
 
-      // Augmented assignment: x += 1, x -= 1 etc.
+      // Tuple unpacking: a, b, c = func()
+      const tupleUnpack = content.match(/^([a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)+)\s*=\s*(.+)$/);
+      if (tupleUnpack) {
+        const names = tupleUnpack[1].split(',').map(n => n.trim());
+        const val   = evalExpr(tupleUnpack[2].trim());
+        const vals  = Array.isArray(val) ? val : [val];
+        names.forEach((n, idx) => { vars[n] = vals[idx] !== undefined ? vals[idx] : null; });
+        continue;
+      }
+
+      // Augmented assignment
       const augM = content.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=)\s*(.+)$/);
       if (augM) {
         const cur = vars[augM[1]] !== undefined ? vars[augM[1]] : 0;
@@ -991,7 +1175,7 @@ function runPyLite(code, inputVal) {
         continue;
       }
 
-      // List item assignment: items[0] = value
+      // List item assignment
       const listAssignM = content.match(/^([a-zA-Z_]\w*)\[(.+)\]\s*=\s*(.+)$/);
       if (listAssignM) {
         const lst = vars[listAssignM[1]];
@@ -1012,11 +1196,11 @@ function runPyLite(code, inputVal) {
       const printM = content.match(/^print\((.*)\)$/s);
       if (printM) { evalPrint(printM[1]); continue; }
 
-      // Method call as statement: list.append(x) etc.
+      // Method call as statement
       const stmtMethod = content.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
       if (stmtMethod) { evalExpr(content); continue; }
 
-      // Bare expression
+      // Bare expression / function call as statement
       try { evalExpr(content); } catch(e) { throw String(e); }
     }
   }
@@ -1024,8 +1208,9 @@ function runPyLite(code, inputVal) {
   try { execLines(lines, 0); } catch(e) { error = String(e); }
   return { output, error };
 }
+
 // ═══════════════════════════════════════════════════════════
-//  RUN PYTHON — uses zero-dependency pyLite interpreter
+//  RUN PYTHON
 // ═══════════════════════════════════════════════════════════
 function runPython(stepId) {
   const ed = editors[stepId];
@@ -1033,12 +1218,11 @@ function runPython(stepId) {
   const code = ed.getValue();
   const outEl = document.getElementById(`output-${stepId}`);
   const runBtn = document.getElementById(`run-btn-${stepId}`);
-  const stdinVal = document.getElementById(`stdin-${stepId}`)?.value || '0';
+  const stdinVal = document.getElementById(`stdin-${stepId}`)?.value || '';
 
   outEl.innerHTML = '<span class="output-placeholder">Running...</span>';
   runBtn.disabled = true;
 
-  // Small delay so "Running..." renders before execution
   setTimeout(() => {
     try {
       const result = runPyLite(code, stdinVal);
@@ -1081,7 +1265,7 @@ function checkCode(stepId) {
 
   const code = ed.getValue();
   const output = ed._lastOutput || '';
-  const inputVal = ed._lastInput || '0';
+  const inputVal = ed._lastInput || '';
   const result = step.goalCheck(code, output, inputVal);
 
   const resEl = document.getElementById(`code-result-${stepId}`);
@@ -1091,7 +1275,6 @@ function checkCode(stepId) {
   if (result.pass) {
     GS.codeChecked.add(stepId);
     awardXP(10, true);
-    // Show code badge if both quiz and code done
     maybeCompleteStep(stepId);
   }
 }
@@ -1106,134 +1289,12 @@ function maybeCompleteStep(stepId) {
     buildNav();
     if (step.badge) showBadge(step.badge);
     const btn = document.getElementById(`unlock-btn-${stepId}`);
-    if (btn) { btn.classList.add('visible'); }
+    if (btn) btn.classList.add('visible');
   }
 }
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ═══════════════════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════════════════
-function init() { buildNav(); renderStep(0); }
-
-function buildNav() {
-  const nav = document.getElementById('step-nav');
-  nav.innerHTML = '';
-  MISSION.steps.forEach((step, i) => {
-    const locked = i > 0 && !GS.completedSteps.has(i-1);
-    const completed = GS.completedSteps.has(i);
-    const active = GS.currentStep === i;
-    const isLast = i === MISSION.steps.length-1;
-    nav.innerHTML += `<div class="step-node ${completed?'completed':''} ${active?'active':''} ${locked?'locked':''}" onclick="navToStep(${i})">
-      ${!isLast?'<div class="step-connector"></div>':''}
-      <div class="step-dot">${completed?'✓':(i+1)}</div>
-      <div><div class="step-name">${step.title}</div>
-      <div class="step-xp">${completed?'✓ '+step.xp+' XP':'+'+step.xp+' XP'}</div></div>
-    </div>`;
-  });
-}
-
-function navToStep(i) {
-  if (i > 0 && !GS.completedSteps.has(i-1)) return;
-  GS.currentStep = i;
-  renderStep(i);
-  buildNav();
-}
-
-function renderStep(idx) {
-  const step = MISSION.steps[idx];
-  const ch   = step.challenge;
-  const qDone = GS.quizAnswered.has(idx);
-  const cDone = GS.codeChecked.has(idx);
-  const stepDone = GS.completedSteps.has(idx);
-
-  // MCQ options
-  let optsHtml = ch.options.map((o,i) =>
-    `<button class="opt-btn ${qDone && i===ch.correct?'correct':''}"
-      id="opt-${idx}-${i}" onclick="checkMCQ(${idx},${i})" ${qDone?'disabled':''}>${o}</button>`
-  ).join('');
-
-  const hintUsed = GS.hintUsed.includes(idx);
-
-  // Needs both quiz + code check (if goalCheck exists) to unlock
-  const needsCode = !!step.goalCheck;
-  const unlockReady = qDone && (!needsCode || cDone);
-
-  const html = `
-  <div class="mission-card">
-    <div class="card-header">
-      <span class="card-step-badge">Step ${idx+1} of ${MISSION.steps.length}</span>
-      <span class="card-xp-badge">+${step.xp} XP</span>
-    </div>
-    <div class="card-body">
-      <h2 class="step-title">${step.title}</h2>
-      ${step.content}
-      <div class="challenge-box">
-        <div class="challenge-label">Quiz challenge — +${step.xp} XP</div>
-        <div class="challenge-q">${ch.q}</div>
-        <div class="options-grid">${optsHtml}</div>
-        <div class="hint-row">
-          <button class="hint-btn" onclick="showHint(${idx})" ${hintUsed?'disabled style="opacity:.5"':''}>
-            💡 ${hintUsed?'Hint shown':`Hint (−${ch.hintCost} XP)`}
-          </button>
-        </div>
-        <div class="hint-text ${hintUsed?'visible':''}" id="hint-${idx}">${ch.hint}</div>
-        <button class="unlock-btn ${unlockReady?'visible':''}" id="unlock-btn-${idx}"
-                onclick="nextStep(${idx})">
-          ${idx===MISSION.steps.length-1?'🎉 Complete Mission!':'🔓 Unlock Next Step →'}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CODE EDITOR -->
-  <div class="editor-panel">
-    <div class="editor-header">
-      <span class="editor-title">Python Editor</span>
-      <div class="editor-tabs">
-        <span style="font-size:11px;color:var(--muted);align-self:center">Type your score below, then click Run ▶</span>
-      </div>
-    </div>
-    <div class="editor-wrap">
-      <textarea class="code-editor" id="editor-${idx}" spellcheck="false"
-        onkeydown="handleTab(event)">${escHtml(step.starterCode)}</textarea>
-    </div>
-    <div class="input-row">
-      <span class="input-label">Score input:</span>
-      <input class="stdin-input" id="stdin-${idx}" type="number" min="0" max="100"
-             placeholder="Enter a score (0–100)" value="78">
-      <span class="stdin-hint">← type a score here before running</span>
-    </div>
-    <div class="run-bar">
-      <button class="run-btn" id="run-btn-${idx}" onclick="runPython(${idx})">▶ Run</button>
-      ${needsCode ? `<button class="check-code-btn" id="check-code-btn-${idx}"
-        onclick="checkCode(${idx})" ${cDone?'disabled':''}>
-        ${cDone?'✓ Code Checked':'✔ Check My Code'}
-      </button>` : ''}
-      <button class="reset-btn" onclick="resetCode(${idx})">↺ Reset</button>
-    </div>
-    <div class="output-panel" id="output-${idx}">
-      <span class="output-placeholder">Click ▶ Run to execute your Python code...</span>
-    </div>
-    ${needsCode?`<div class="code-result" id="code-result-${idx}"></div>`:''}
-    <div class="goal-box">🎯 <strong>Goal:</strong> ${step.goal}</div>
-  </div>`;
-
-  document.getElementById('centre-panel').innerHTML = html;
-  window.scrollTo({top:0,behavior:'smooth'});
-
-  // Init plain editor
-  const ta = document.getElementById(`editor-${idx}`);
-  const editor = {
-    getValue:  () => ta.value,
-    setValue:  (v) => { ta.value = v; },
-    _lastOutput: '',
-    _lastInput:  '78'
-  };
-  editors[idx] = editor;
 }
 
 function resetCode(idx) {
@@ -1280,7 +1341,7 @@ function nextStep(currentIdx) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  XP / LIVES
+//  XP / LIVES / BADGES
 // ═══════════════════════════════════════════════════════════
 function awardXP(amt, popup=false) {
   GS.xp = Math.max(0, GS.xp + amt);
@@ -1321,22 +1382,17 @@ function showBadge(badge) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3500);
 }
+
 function completeMission() {
-  // Save completion to localStorage
-  const saveKey = 'ks3_mission_' + (MISSION.missionMap[0]?.id || 1);
+  const saveKey = 'ks3_mission_2';
   localStorage.setItem(saveKey, JSON.stringify({ xp: GS.xp, badges: GS.badges.map(b=>b.name), completedAt: new Date().toISOString() }));
-
   document.getElementById('final-xp').textContent = GS.xp;
-
-  // Badges
   document.getElementById('final-badges').innerHTML = GS.badges.length
     ? GS.badges.map(b=>`<div class="complete-badge">${b.icon} ${b.name}</div>`).join('')
     : '';
-
-  // Mission map
   const mapEl = document.getElementById('mission-map-display');
-  mapEl.innerHTML = MISSION.missionMap.map((m, idx) => {
-    const isCurrent = m.id === MISSION.missionMap[0].id;
+  mapEl.innerHTML = MISSION.missionMap.map((m) => {
+    const isCurrent = m.id === 2;
     const isDone = m.done || isCurrent;
     return `<div class="mm-item ${isDone?'done':''} ${isCurrent?'current':''}">
       ${isDone?'<div class="mm-check">✓</div>':''}
@@ -1344,8 +1400,6 @@ function completeMission() {
       <div class="mm-label">M${m.id}</div>
     </div>`;
   }).join('');
-
-  // Next mission
   const next = MISSION.nextMission;
   if (next) {
     document.getElementById('next-mission-title').textContent = next.badge + ' ' + next.title;
@@ -1356,38 +1410,22 @@ function completeMission() {
     document.getElementById('next-preview').style.display = 'block';
     document.getElementById('next-mission-btn').style.display = 'flex';
   } else {
-    // Final mission in series
     document.getElementById('next-preview').style.display = 'none';
     document.getElementById('next-mission-btn').textContent = '🏆 All Missions Complete!';
     document.getElementById('next-mission-btn').onclick = null;
     document.getElementById('complete-sub-text').textContent = 'You have completed all Python missions!';
   }
-
   document.getElementById('complete-overlay').classList.add('show');
 }
 
 function goNextMission() {
   const next = MISSION.nextMission;
   if (!next) return;
-  // If file exists in same folder, navigate to it
-  // Otherwise show a friendly message
-  if (next.file && next.file !== 'task-engine.html') {
+  if (next.file) {
     window.location.href = next.file;
-  } else {
-    // For prototype — show coming soon message
-    const btn = document.getElementById('next-mission-btn');
-    btn.textContent = '🔧 Coming Soon — check back soon!';
-    btn.style.background = 'var(--surface3)';
-    btn.style.color = 'var(--muted)';
-    btn.style.boxShadow = 'none';
-    setTimeout(() => {
-      btn.innerHTML = '<span>🚀</span><span>Start Next Mission</span><span>→</span>';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.boxShadow = '';
-    }, 2500);
   }
 }
+
 function restartMission() {
   GS = {xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
   editors = {};
@@ -1396,9 +1434,118 @@ function restartMission() {
   document.getElementById('lives-display').textContent = '❤️❤️❤️';
   updateProgress(); buildNav(); renderStep(0);
 }
+
 function setFilter(t) {
   if (t==='ng') { document.body.classList.remove('superpower'); document.body.classList.toggle('nature-green'); }
   else { document.body.classList.remove('nature-green'); document.body.classList.toggle('superpower'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function init() { buildNav(); renderStep(0); }
+
+function buildNav() {
+  const nav = document.getElementById('step-nav');
+  nav.innerHTML = '';
+  MISSION.steps.forEach((step, i) => {
+    const locked    = i > 0 && !GS.completedSteps.has(i-1);
+    const completed = GS.completedSteps.has(i);
+    const active    = GS.currentStep === i;
+    const isLast    = i === MISSION.steps.length-1;
+    nav.innerHTML += `<div class="step-node ${completed?'completed':''} ${active?'active':''} ${locked?'locked':''}" onclick="navToStep(${i})">
+      ${!isLast?'<div class="step-connector"></div>':''}
+      <div class="step-dot">${completed?'✓':(i+1)}</div>
+      <div><div class="step-name">${step.title}</div>
+      <div class="step-xp">${completed?'✓ '+step.xp+' XP':'+'+step.xp+' XP'}</div></div>
+    </div>`;
+  });
+}
+
+function navToStep(i) {
+  if (i > 0 && !GS.completedSteps.has(i-1)) return;
+  GS.currentStep = i;
+  renderStep(i);
+  buildNav();
+}
+
+function renderStep(idx) {
+  const step   = MISSION.steps[idx];
+  const ch     = step.challenge;
+  const qDone  = GS.quizAnswered.has(idx);
+  const cDone  = GS.codeChecked.has(idx);
+  const needsCode  = !!step.goalCheck;
+  const unlockReady = qDone && (!needsCode || cDone);
+  const hintUsed   = GS.hintUsed.includes(idx);
+
+  const optsHtml = ch.options.map((o,i) =>
+    `<button class="opt-btn ${qDone && i===ch.correct?'correct':''}"
+      id="opt-${idx}-${i}" onclick="checkMCQ(${idx},${i})" ${qDone?'disabled':''}>${o}</button>`
+  ).join('');
+
+  const html = `
+  <div class="mission-card">
+    <div class="card-header">
+      <span class="card-step-badge">Step ${idx+1} of ${MISSION.steps.length}</span>
+      <span class="card-xp-badge">+${step.xp} XP</span>
+    </div>
+    <div class="card-body">
+      <h2 class="step-title">${step.title}</h2>
+      ${step.content}
+      <div class="challenge-box">
+        <div class="challenge-label">Quiz challenge — +${step.xp} XP</div>
+        <div class="challenge-q">${ch.q}</div>
+        <div class="options-grid">${optsHtml}</div>
+        <div class="hint-row">
+          <button class="hint-btn" onclick="showHint(${idx})" ${hintUsed?'disabled style="opacity:.5"':''}>
+            💡 ${hintUsed?'Hint shown':`Hint (−${ch.hintCost} XP)`}
+          </button>
+        </div>
+        <div class="hint-text ${hintUsed?'visible':''}" id="hint-${idx}">${ch.hint}</div>
+        <button class="unlock-btn ${unlockReady?'visible':''}" id="unlock-btn-${idx}"
+                onclick="nextStep(${idx})">
+          ${idx===MISSION.steps.length-1?'🎉 Complete Mission!':'🔓 Unlock Next Step →'}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-panel">
+    <div class="editor-header">
+      <span class="editor-title">Python Editor</span>
+      <div class="editor-tabs">
+        <span style="font-size:11px;color:var(--muted);align-self:center">Write your code below, then click Run ▶</span>
+      </div>
+    </div>
+    <div class="editor-wrap">
+      <textarea class="code-editor" id="editor-${idx}" spellcheck="false"
+        onkeydown="handleTab(event)">${escHtml(step.starterCode)}</textarea>
+    </div>
+    <div class="run-bar">
+      <button class="run-btn" id="run-btn-${idx}" onclick="runPython(${idx})">▶ Run</button>
+      ${needsCode ? `<button class="check-code-btn" id="check-code-btn-${idx}"
+        onclick="checkCode(${idx})" ${cDone?'disabled':''}>
+        ${cDone?'✓ Code Checked':'✔ Check My Code'}
+      </button>` : ''}
+      <button class="reset-btn" onclick="resetCode(${idx})">↺ Reset</button>
+    </div>
+    <div class="output-panel" id="output-${idx}">
+      <span class="output-placeholder">Click ▶ Run to execute your Python code...</span>
+    </div>
+    ${needsCode?`<div class="code-result" id="code-result-${idx}"></div>`:''}
+    <div class="goal-box">🎯 <strong>Goal:</strong> ${step.goal}</div>
+  </div>`;
+
+  document.getElementById('centre-panel').innerHTML = html;
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  const ta = document.getElementById(`editor-${idx}`);
+  editors[idx] = {
+    getValue:  () => ta.value,
+    setValue:  (v) => { ta.value = v; },
+    _lastOutput: '',
+    _lastInput:  ''
+  };
 }
 
 init();
