@@ -140,10 +140,51 @@ body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;
 .fbtn{padding:5px 10px;border-radius:13px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
 body.nature-green{--bg:#f4f1e8;--surface:#1a1508;--surface2:#2a2510;--surface3:#3a3518;--border:#6a5520;--text:#f0ecd8;--muted:#a09060;--accent:#d4a820;--accent2:#4a9a4a;}
 body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;letter-spacing:.06em;word-spacing:.18em;line-height:1.9!important;}
+/* ── LOGIN OVERLAY ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#020d1a 0%,#0a1628 60%,#112240 100%);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-overlay.hidden{display:none;}
+.login-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:40px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(255,201,64,.15);}
+.login-logo{font-size:52px;margin-bottom:12px;}
+.login-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.login-subtitle{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.5;}
+.login-field{margin-bottom:16px;text-align:left;}
+.login-label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.login-input{width:100%;background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--sans);font-size:15px;outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-input::placeholder{color:var(--muted);}
+.login-btn{width:100%;margin-top:8px;background:linear-gradient(135deg,var(--accent),#ff9800);border:none;border-radius:12px;padding:14px;color:#000;font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(255,201,64,.3);}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(255,201,64,.4);}
+.login-error{color:var(--danger);font-size:13px;margin-top:8px;display:none;}
+.login-error.show{display:block;}
+.student-chip{display:flex;align-items:center;gap:6px;background:rgba(255,201,64,.1);border:1px solid rgba(255,201,64,.3);border-radius:20px;padding:3px 10px 3px 6px;font-family:var(--mono);font-size:11px;color:var(--accent);}
+.student-chip-avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+/* ── PROOF OF LEARNING BUTTON ── */
+.pol-btn{width:100%;margin-top:10px;background:var(--surface2);border:2px solid var(--accent2);border-radius:12px;padding:13px;color:var(--accent2);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pol-btn:hover{background:rgba(0,229,255,.08);transform:translateY(-1px);}
 @media(max-width:900px){.step-sidebar{display:none;}.layout{padding:12px;}.options-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN OVERLAY ── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">🛒</div>
+    <div class="login-title">Shopping Cart Calculator</div>
+    <div class="login-subtitle">Y9 Python Mission — enter your details to begin</div>
+    <div class="login-field">
+      <label class="login-label" for="login-name">Your Name</label>
+      <input class="login-input" id="login-name" type="text" placeholder="e.g. Alex Johnson" autocomplete="off" maxlength="60">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="login-class">Class Code</label>
+      <input class="login-input" id="login-class" type="text" placeholder="e.g. 9CS1" autocomplete="off" maxlength="20"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Please enter your name and class code.</div>
+    <button class="login-btn" onclick="doLogin()">▶ Start Mission</button>
+  </div>
+</div>
 
 <div class="filter-bar">
   <button class="fbtn" onclick="setFilter('ng')">🌿</button>
@@ -156,6 +197,10 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
     <span class="mission-title">Shopping Cart Calculator — Y9 Python</span>
   </div>
   <div class="topbar-right">
+    <div class="student-chip" id="student-chip" style="display:none">
+      <div class="student-chip-avatar" id="student-avatar">?</div>
+      <span id="student-name-display"></span>
+    </div>
     <div class="lives-display" id="lives-display">❤️❤️❤️</div>
     <div class="xp-display">⚡ <span id="xp-count">0</span> <span style="color:var(--muted);font-size:11px">XP</span></div>
   </div>
@@ -201,6 +246,7 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
       <span id="next-btn-icon">🚀</span><span id="next-btn-label">Start Next Mission</span><span>→</span>
     </button>
     <div style="margin-top:12px">
+      <button class="pol-btn" onclick="downloadProofOfLearning()">📄 Download Proof of Learning</button>
       <button class="restart-btn" onclick="restartMission()">↺ Restart Mission</button>
     </div>
   </div>
@@ -1313,19 +1359,28 @@ function checkMCQ(stepIdx, chosen) {
   if (GS.quizAnswered.has(stepIdx)) return;
   const step = MISSION.steps[stepIdx];
   const correct = chosen === step.challenge.correct;
-  step.challenge.options.forEach((_,i) => {
-    const btn = document.getElementById(`opt-${stepIdx}-${i}`);
-    if (!btn) return;
-    btn.disabled = true;
-    if (i === step.challenge.correct) btn.classList.add('correct');
-    else if (i === chosen && !correct) btn.classList.add('wrong');
-  });
   if (correct) {
+    step.challenge.options.forEach((_,i) => {
+      const btn = document.getElementById(`opt-${stepIdx}-${i}`);
+      if (!btn) return;
+      btn.disabled = true;
+      if (i === step.challenge.correct) btn.classList.add('correct');
+    });
     awardXP(step.xp, true);
     GS.quizAnswered.add(stepIdx);
     maybeCompleteStep(stepIdx);
   } else {
     loseLife();
+    const wrongBtn = document.getElementById(`opt-${stepIdx}-${chosen}`);
+    if (wrongBtn) {
+      wrongBtn.disabled = true;
+      wrongBtn.classList.add('wrong');
+      setTimeout(() => {
+        wrongBtn.classList.remove('wrong');
+        wrongBtn.disabled = true;
+        wrongBtn.style.opacity = '0.4';
+      }, 800);
+    }
   }
 }
 
@@ -1546,6 +1601,134 @@ function renderStep(idx) {
     _lastOutput: '',
     _lastInput:  ''
   };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STUDENT LOGIN
+// ═══════════════════════════════════════════════════════════
+let STUDENT = { name: '', classCode: '' };
+
+function doLogin() {
+  const name  = document.getElementById('login-name').value.trim();
+  const code  = document.getElementById('login-class').value.trim();
+  const errEl = document.getElementById('login-error');
+  if (!name || !code) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  STUDENT.name = name;
+  STUDENT.classCode = code.toUpperCase();
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('student-avatar').textContent = initials;
+  document.getElementById('student-name-display').textContent = name + ' · ' + STUDENT.classCode;
+  document.getElementById('student-chip').style.display = 'flex';
+  document.getElementById('login-overlay').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROOF OF LEARNING DOWNLOAD
+// ═══════════════════════════════════════════════════════════
+function downloadProofOfLearning() {
+  const date = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
+  const time = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+
+  const stepSections = MISSION.steps.map((step, idx) => {
+    if (!GS.completedSteps.has(idx)) return '';
+    const code = editors[idx]?.getValue() || '# (no code recorded)';
+    const escaped = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `
+      <div class="step-section">
+        <div class="step-header">
+          <span class="step-num">Step ${idx+1}</span>
+          <span class="step-name">${step.title}</span>
+          <span class="step-xp">+${step.xp} XP</span>
+        </div>
+        <pre class="code-block">${escaped}</pre>
+      </div>`;
+  }).join('');
+
+  const badgesHtml = GS.badges.length
+    ? GS.badges.map(b=>`<div class="badge-item">${b.icon} <strong>${b.name}</strong><span>${b.desc}</span></div>`).join('')
+    : '<div class="badge-item">—</div>';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proof of Learning — ${STUDENT.name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:#1a202c;padding:32px;max-width:860px;margin:0 auto;}
+  .certificate{background:#fff;border-radius:20px;box-shadow:0 4px 32px rgba(0,0,0,.1);overflow:hidden;}
+  .cert-header{background:linear-gradient(135deg,#0a1628,#1a3355);color:#fff;padding:36px 40px;text-align:center;}
+  .cert-school{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7aaddd;margin-bottom:8px;}
+  .cert-title{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:#ffc940;margin-bottom:6px;}
+  .cert-sub{font-size:14px;color:#7aaddd;}
+  .cert-body{padding:36px 40px;}
+  .student-block{display:flex;align-items:center;gap:20px;background:#f7fafc;border:2px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:28px;}
+  .student-avatar{width:56px;height:56px;border-radius:50%;background:#ffc940;color:#000;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;flex-shrink:0;}
+  .student-name{font-size:22px;font-weight:700;color:#1a202c;}
+  .student-meta{font-size:13px;color:#718096;margin-top:3px;}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+  .stat-card{background:#f7fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;}
+  .stat-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:#ffc940;}
+  .stat-label{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+  .section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#718096;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}
+  .badges-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+  .badge-item{display:flex;align-items:baseline;gap:10px;background:#fffbeb;border:1px solid #f6e05e;border-radius:8px;padding:10px 14px;font-size:14px;}
+  .badge-item strong{color:#744210;}
+  .badge-item span{font-size:12px;color:#92400e;margin-left:4px;}
+  .step-section{margin-bottom:20px;}
+  .step-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .step-num{font-family:'Space Mono',monospace;font-size:10px;background:#0a1628;color:#ffc940;padding:2px 8px;border-radius:4px;}
+  .step-name{font-weight:700;font-size:15px;color:#1a202c;flex:1;}
+  .step-xp{font-family:'Space Mono',monospace;font-size:11px;color:#38a169;background:#f0fff4;border:1px solid #9ae6b4;border-radius:20px;padding:2px 8px;}
+  .code-block{background:#020d1a;color:#a8d8ea;font-family:'Space Mono',monospace;font-size:12px;line-height:1.8;padding:16px;border-radius:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}
+  .cert-footer{background:#f7fafc;border-top:1px solid #e2e8f0;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#718096;}
+  .footer-stamp{font-family:'Space Mono',monospace;font-size:10px;color:#a0aec0;text-align:right;}
+  @media print{body{padding:0;background:#fff;}.certificate{box-shadow:none;}}
+</style>
+</head>
+<body>
+<div class="certificate">
+  <div class="cert-header">
+    <div class="cert-school">Corby Business Academy — Computer Science</div>
+    <div class="cert-title">Proof of Learning</div>
+    <div class="cert-sub">Shopping Cart Calculator · Y9 Python Mission 2 of 4</div>
+  </div>
+  <div class="cert-body">
+    <div class="student-block">
+      <div class="student-avatar">${STUDENT.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+      <div>
+        <div class="student-name">${STUDENT.name}</div>
+        <div class="student-meta">Class: ${STUDENT.classCode} &nbsp;·&nbsp; Completed: ${date} at ${time}</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val">${GS.xp}</div><div class="stat-label">XP Earned</div></div>
+      <div class="stat-card"><div class="stat-val">${GS.completedSteps.size}/${MISSION.steps.length}</div><div class="stat-label">Steps Done</div></div>
+      <div class="stat-card"><div class="stat-val">${GS.badges.length}</div><div class="stat-label">Badges</div></div>
+    </div>
+    <div class="section-title">Badges Earned</div>
+    <div class="badges-grid">${badgesHtml}</div>
+    <div class="section-title">Code Written — Step by Step</div>
+    ${stepSections}
+  </div>
+  <div class="cert-footer">
+    <div>🛒 Shopping Cart Calculator · Corby Business Academy</div>
+    <div class="footer-stamp">Generated ${date} ${time}<br>Student: ${STUDENT.name} · ${STUDENT.classCode}</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const safeName = STUDENT.name.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  a.href = url;
+  a.download = `proof_of_learning_${safeName}_${STUDENT.classCode.toLowerCase()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 init();
