@@ -158,6 +158,21 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 .login-error.show{display:block;}
 .student-chip{display:flex;align-items:center;gap:6px;background:rgba(255,201,64,.1);border:1px solid rgba(255,201,64,.3);border-radius:20px;padding:3px 10px 3px 6px;font-family:var(--mono);font-size:11px;color:var(--accent);}
 .student-chip-avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+/* ── MISSION FAILED OVERLAY ── */
+.failed-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:998;align-items:center;justify-content:center;}
+.failed-overlay.show{display:flex;}
+.failed-card{background:var(--surface);border:2px solid var(--danger);border-radius:24px;padding:36px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(255,82,82,.2);}
+.failed-emoji{font-size:60px;margin-bottom:14px;animation:wobble .6s ease;}
+@keyframes wobble{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+.failed-title{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--danger);margin-bottom:8px;}
+.failed-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:6px;}
+.failed-step{font-family:var(--mono);font-size:12px;color:var(--warn);background:rgba(255,171,64,.08);border:1px solid rgba(255,171,64,.2);border-radius:8px;padding:8px 14px;margin:14px 0 20px;}
+.failed-xp{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.failed-xp-label{color:var(--muted);font-size:12px;margin-bottom:24px;}
+.failed-btn-primary{width:100%;background:linear-gradient(135deg,var(--accent),#ff9800);border:none;border-radius:12px;padding:14px;color:#000;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(255,201,64,.3);display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+.failed-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(255,201,64,.4);}
+.failed-btn-secondary{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.failed-btn-secondary:hover{border-color:var(--danger);color:var(--danger);}
 /* ── PROOF OF LEARNING BUTTON ── */
 .pol-btn{width:100%;margin-top:10px;background:var(--surface2);border:2px solid var(--accent2);border-radius:12px;padding:13px;color:var(--accent2);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .pol-btn:hover{background:rgba(0,229,255,.08);transform:translateY(-1px);}
@@ -220,6 +235,23 @@ body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;l
 <div class="badge-toast" id="badge-toast">
   <div class="badge-icon" id="badge-icon">🏅</div>
   <div><div class="badge-title" id="badge-title">Badge!</div><div class="badge-sub" id="badge-sub"></div></div>
+</div>
+
+<div class="failed-overlay" id="failed-overlay">
+  <div class="failed-card">
+    <div class="failed-emoji">💀</div>
+    <div class="failed-title">Mission Failed</div>
+    <div class="failed-sub">You ran out of lives. Don't worry — you can skip ahead or go back and try again.</div>
+    <div class="failed-step" id="failed-step-info"></div>
+    <div class="failed-xp" id="failed-xp">0</div>
+    <div class="failed-xp-label">XP earned so far</div>
+    <button class="failed-btn-primary" id="failed-next-btn" onclick="failedGoNext()">
+      <span id="failed-next-icon">🚀</span>
+      <span id="failed-next-label">Continue to Next Mission</span>
+      <span>→</span>
+    </button>
+    <button class="failed-btn-secondary" onclick="restartMission()">↺ Start This Mission Again</button>
+  </div>
 </div>
 
 <div class="complete-overlay" id="complete-overlay">
@@ -1411,8 +1443,28 @@ function awardXP(amt, popup=false) {
   }
 }
 function loseLife() {
-  GS.lives = Math.max(0, GS.lives-1);
-  document.getElementById('lives-display').textContent = ['💀','❤️','❤️❤️','❤️❤️❤️'][GS.lives]||'💀';
+  GS.lives = Math.max(0, GS.lives - 1);
+  document.getElementById('lives-display').textContent = ['💀','❤️','❤️❤️','❤️❤️❤️'][GS.lives] || '💀';
+  if (GS.lives === 0) setTimeout(missionFailed, 900);
+}
+function missionFailed() {
+  const step = MISSION.steps[GS.currentStep];
+  document.getElementById('failed-xp').textContent = GS.xp;
+  document.getElementById('failed-step-info').textContent =
+    `You were on Step ${GS.currentStep + 1}: "${step.title}"`;
+  const next = MISSION.nextMission;
+  if (next) {
+    document.getElementById('failed-next-icon').textContent = next.badge;
+    document.getElementById('failed-next-label').textContent = 'Continue to: ' + next.title;
+    document.getElementById('failed-next-btn').style.display = 'flex';
+  } else {
+    document.getElementById('failed-next-btn').style.display = 'none';
+  }
+  document.getElementById('failed-overlay').classList.add('show');
+}
+function failedGoNext() {
+  document.getElementById('failed-overlay').classList.remove('show');
+  goNextMission();
 }
 function showHint(idx) {
   if (GS.hintUsed.includes(idx)) return;
@@ -1485,6 +1537,7 @@ function restartMission() {
   GS = {xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
   editors = {};
   document.getElementById('complete-overlay').classList.remove('show');
+  document.getElementById('failed-overlay').classList.remove('show');
   document.getElementById('xp-count').textContent = '0';
   document.getElementById('lives-display').textContent = '❤️❤️❤️';
   updateProgress(); buildNav(); renderStep(0);
