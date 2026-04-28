@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission: Chatbot — Python</title>
+<style>
+:root{--bg:#0a1a0a;--surface:#080f08;--surface2:#101810;--surface3:#182018;--border:#2a4a2a;--text:#d4f0d4;--muted:#6a9a6a;--accent:#4ade80;--accent2:#86efac;--success:#4ade80;--danger:#f87171;--warn:#fb923c;--mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+.topbar{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.mission-tag{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);padding:3px 10px;border-radius:3px;}
+.mission-title{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.xp-display{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;color:var(--accent);}
+.lives-display{display:flex;align-items:center;gap:4px;font-size:16px;}
+.master-progress{width:100%;background:var(--surface);padding:8px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.mp-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.mp-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;}
+.mp-pct{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:35px;text-align:right;}
+.layout{display:flex;width:100%;max-width:1400px;flex:1;padding:20px;gap:16px;align-items:flex-start;}
+.step-sidebar{width:200px;flex-shrink:0;position:sticky;top:92px;}
+.sidebar-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
+.step-node{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .2s;position:relative;margin-bottom:2px;}
+.step-node:hover{background:rgba(255,255,255,.04);}
+.step-node.active{background:rgba(74,222,128,.08);}
+.step-node.locked{opacity:.4;cursor:not-allowed;}
+.step-connector{position:absolute;left:21px;top:36px;width:2px;height:10px;background:var(--border);}
+.step-node.completed .step-connector{background:var(--success);}
+.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;margin-top:1px;transition:all .3s;}
+.step-node.completed .step-dot{background:var(--success);border-color:var(--success);color:#000;font-size:12px;}
+.step-node.active .step-dot{border-color:var(--accent);color:var(--accent);background:rgba(74,222,128,.1);}
+.step-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
+.step-node.locked .step-name{color:var(--muted);}
+.step-xp{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:2px;}
+.step-node.completed .step-xp{color:var(--success);}
+.centre-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
+.mission-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+.card-step-badge{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+.card-xp-badge{font-family:var(--mono);font-size:12px;color:var(--accent);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);padding:2px 10px;border-radius:20px;}
+.card-body{padding:18px 20px;}
+.step-title{font-size:21px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.step-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.step-desc strong{color:var(--text);}
+.code-block{background:#010801;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;color:var(--accent2);line-height:1.8;margin-bottom:14px;overflow-x:auto;}
+.code-block .kw{color:#f472b6;}.code-block .fn{color:#86efac;}.code-block .str{color:#fde68a;}.code-block .cm{color:#2a4a2a;font-style:italic;}.code-block .num{color:#fb923c;}
+.callout{border-left:3px solid var(--accent2);background:rgba(134,239,172,.05);border-radius:0 8px 8px 0;padding:11px 15px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:14px;}
+.callout.warn{border-color:var(--warn);background:rgba(251,146,60,.05);}
+.callout.success{border-color:var(--success);background:rgba(74,222,128,.05);}
+.challenge-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:4px;}
+.challenge-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.challenge-label::before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+.challenge-q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.5;}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.opt-btn{background:var(--surface3);border:2px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;text-align:left;transition:all .2s;line-height:1.4;}
+.opt-btn:hover{border-color:var(--accent2);background:rgba(134,239,172,.05);}
+.opt-btn.correct{border-color:var(--success);background:rgba(74,222,128,.12);color:var(--success);}
+.opt-btn.wrong{border-color:var(--danger);background:rgba(248,113,113,.12);color:var(--danger);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.hint-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.hint-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+.hint-btn:hover{border-color:var(--warn);color:var(--warn);}
+.hint-text{display:none;background:rgba(251,146,60,.07);border:1px solid rgba(251,146,60,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--warn);margin-top:8px;line-height:1.6;}
+.hint-text.visible{display:block;}
+.unlock-btn{width:100%;background:linear-gradient(135deg,var(--accent),#16a34a);border:none;border-radius:12px;padding:13px 24px;color:#000;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(74,222,128,.3);}
+.unlock-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(74,222,128,.4);}
+.unlock-btn.visible{display:flex;}
+.editor-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
+.editor-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.editor-title{font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.editor-title::before{content:'🤖';font-size:14px;}
+.editor-wrap{position:relative;background:#010801;}
+.code-editor{width:100%;min-height:180px;resize:vertical;background:#010801;color:#d4f0d4;font-family:var(--mono);font-size:13px;line-height:1.8;border:none;outline:none;padding:14px 16px;tab-size:4;white-space:pre;display:block;}
+.code-editor:focus{background:#020f02;}
+.input-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#010801;border-top:1px solid var(--border);}
+.input-label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+.stdin-input{flex:1;background:#0a1a0a;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2);font-family:var(--mono);font-size:13px;outline:none;}
+.stdin-input:focus{border-color:var(--accent2);}
+.stdin-hint{font-size:11px;color:var(--muted);font-style:italic;}
+.run-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);}
+.run-btn{display:flex;align-items:center;gap:6px;background:var(--success);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.run-btn:hover{background:#00ff88;transform:translateY(-1px);}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.check-code-btn{display:flex;align-items:center;gap:6px;background:var(--accent);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.check-code-btn:hover{filter:brightness(1.1);}
+.check-code-btn:disabled{opacity:.4;cursor:not-allowed;}
+.reset-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;margin-left:auto;}
+.reset-btn:hover{border-color:var(--danger);color:var(--danger);}
+.output-panel{background:#010801;border-top:1px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:13px;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.output-line{color:var(--accent2);}
+.output-error{color:var(--danger);}
+.output-placeholder{color:var(--muted);font-style:italic;}
+.code-result{margin:0 14px 12px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:none;}
+.code-result.pass{background:rgba(74,222,128,.12);border:1px solid var(--success);color:var(--success);display:block;}
+.code-result.fail{background:rgba(248,113,113,.1);border:1px solid var(--danger);color:var(--danger);display:block;}
+.goal-box{padding:10px 14px;background:rgba(74,222,128,.04);border-top:1px solid rgba(74,222,128,.12);font-size:12px;color:var(--muted);}
+.goal-box strong{color:var(--accent2);}
+.xp-pop{position:fixed;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);pointer-events:none;z-index:9999;animation:floatUp .9s ease forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(1.3);}}
+.badge-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:14px 24px;display:flex;align-items:center;gap:12px;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.badge-toast.show{transform:translateX(-50%) translateY(0);}
+.badge-icon{font-size:32px;}.badge-title{font-weight:700;color:var(--text);font-size:14px;}.badge-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#010801 0%,#0a1a0a 60%,#101810 100%);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-overlay.hidden{display:none;}
+.login-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:40px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(74,222,128,.12);}
+.login-logo{font-size:52px;margin-bottom:12px;}
+.login-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.login-subtitle{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.5;}
+.login-field{margin-bottom:16px;text-align:left;}
+.login-label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.login-input{width:100%;background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--sans);font-size:15px;outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-input::placeholder{color:var(--muted);}
+.login-btn{width:100%;margin-top:8px;background:linear-gradient(135deg,var(--accent),#16a34a);border:none;border-radius:12px;padding:14px;color:#000;font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;}
+.login-btn:hover{transform:translateY(-2px);}
+.login-error{color:var(--danger);font-size:13px;margin-top:8px;display:none;}
+.login-error.show{display:block;}
+.student-chip{display:flex;align-items:center;gap:6px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:3px 10px 3px 6px;font-family:var(--mono);font-size:11px;color:var(--accent);}
+.student-chip-avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.failed-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:998;align-items:center;justify-content:center;}
+.failed-overlay.show{display:flex;}
+.failed-card{background:var(--surface);border:2px solid var(--danger);border-radius:24px;padding:36px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(248,113,113,.2);}
+.failed-emoji{font-size:60px;margin-bottom:14px;animation:wobble .6s ease;}
+@keyframes wobble{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+.failed-title{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--danger);margin-bottom:8px;}
+.failed-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:6px;}
+.failed-step{font-family:var(--mono);font-size:12px;color:var(--warn);background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:8px;padding:8px 14px;margin:14px 0 20px;}
+.failed-xp{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.failed-xp-label{color:var(--muted);font-size:12px;margin-bottom:24px;}
+.failed-btn-primary{width:100%;background:linear-gradient(135deg,var(--accent),#16a34a);border:none;border-radius:12px;padding:14px;color:#000;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+.failed-btn-primary:hover{transform:translateY(-2px);}
+.failed-btn-secondary{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.failed-btn-secondary:hover{border-color:var(--danger);color:var(--danger);}
+.complete-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;}
+.complete-overlay.show{display:flex;}
+.complete-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:36px 44px;text-align:center;max-width:480px;width:90%;box-shadow:0 0 80px rgba(74,222,128,.2);max-height:90vh;overflow-y:auto;}
+.complete-emoji{font-size:60px;margin-bottom:14px;}
+.complete-title{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px;}
+.complete-sub{color:var(--muted);font-size:14px;margin-bottom:20px;}
+.complete-xp{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.complete-xp-label{color:var(--muted);font-size:12px;margin-bottom:20px;}
+.complete-badges{display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.complete-badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.restart-btn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 28px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;margin-top:8px;}
+.restart-btn:hover{border-color:var(--accent);color:var(--accent);}
+.next-mission-btn{background:linear-gradient(135deg,var(--accent),#16a34a);border:none;border-radius:14px;padding:16px 32px;color:#000;font-weight:700;font-size:17px;cursor:pointer;transition:all .2s;width:100%;box-shadow:0 4px 24px rgba(74,222,128,.3);display:flex;align-items:center;justify-content:center;gap:10px;}
+.next-mission-btn:hover{transform:translateY(-2px);}
+.mission-map{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.mm-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);min-width:70px;position:relative;}
+.mm-item.done{border-color:var(--success);}.mm-item.current{border-color:var(--accent);}
+.mm-icon{font-size:22px;}.mm-label{font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono);}
+.mm-item.done .mm-label{color:var(--success);}.mm-item.current .mm-label{color:var(--accent);}
+.mm-check{position:absolute;top:-6px;right:-6px;background:var(--success);border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;}
+.complete-divider{width:100%;height:1px;background:var(--border);margin:18px 0;}
+.next-preview{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:18px;text-align:left;}
+.next-preview-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.next-preview-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.next-preview-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+.xp-bonus{display:inline-flex;align-items:center;gap:4px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:2px 10px;font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:6px;}
+.pol-btn{width:100%;margin-top:10px;background:var(--surface2);border:2px solid var(--accent2);border-radius:12px;padding:13px;color:var(--accent2);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pol-btn:hover{background:rgba(134,239,172,.06);transform:translateY(-1px);}
+.filter-bar{position:fixed;top:56px;right:14px;display:flex;gap:5px;z-index:200;}
+.fbtn{padding:5px 10px;border-radius:13px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+body.nature-green{--bg:#f4f1e8;--surface:#1a1508;--surface2:#2a2510;--surface3:#3a3518;--border:#6a5520;--text:#f0ecd8;--muted:#a09060;--accent:#d4a820;--accent2:#4a9a4a;}
+body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;letter-spacing:.06em;word-spacing:.18em;line-height:1.9!important;}
+@media(max-width:900px){.step-sidebar{display:none;}.layout{padding:12px;}.options-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">🤖</div>
+    <div class="login-title">Chatbot</div>
+    <div class="login-subtitle">Python Mission — enter your details to begin</div>
+    <div class="login-field">
+      <label class="login-label" for="login-name">Your Name</label>
+      <input class="login-input" id="login-name" type="text" placeholder="e.g. Alex Johnson" autocomplete="off" maxlength="60">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="login-class">Class Code</label>
+      <input class="login-input" id="login-class" type="text" placeholder="e.g. 9CS1" autocomplete="off" maxlength="20" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Please enter your name and class code.</div>
+    <button class="login-btn" onclick="doLogin()">▶ Start Mission</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="fbtn" onclick="setFilter('ng')">🌿</button>
+  <button class="fbtn" onclick="setFilter('sp')">⚡</button>
+</div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="mission-tag">Mission 4</span>
+    <span class="mission-title">Chatbot — Python</span>
+  </div>
+  <div class="topbar-right">
+    <div class="student-chip" id="student-chip" style="display:none">
+      <div class="student-chip-avatar" id="student-avatar">?</div>
+      <span id="student-name-display"></span>
+    </div>
+    <div class="lives-display" id="lives-display">❤️❤️❤️</div>
+    <div class="xp-display">⚡ <span id="xp-count">0</span> <span style="color:var(--muted);font-size:11px">XP</span></div>
+  </div>
+</div>
+
+<div class="master-progress">
+  <span class="mp-label">Mission progress</span>
+  <div class="mp-bar"><div class="mp-fill" id="master-fill"></div></div>
+  <span class="mp-pct" id="master-pct">0%</span>
+</div>
+
+<div class="layout">
+  <div class="step-sidebar"><div class="sidebar-label">Steps</div><div id="step-nav"></div></div>
+  <div class="centre-panel" id="centre-panel"></div>
+</div>
+
+<div class="badge-toast" id="badge-toast">
+  <div class="badge-icon" id="badge-icon">🏅</div>
+  <div><div class="badge-title" id="badge-title">Badge!</div><div class="badge-sub" id="badge-sub"></div></div>
+</div>
+
+<div class="failed-overlay" id="failed-overlay">
+  <div class="failed-card">
+    <div class="failed-emoji">💀</div>
+    <div class="failed-title">Mission Failed</div>
+    <div class="failed-sub">You ran out of lives. Don't worry — you can skip ahead or try again.</div>
+    <div class="failed-step" id="failed-step-info"></div>
+    <div class="failed-xp" id="failed-xp">0</div>
+    <div class="failed-xp-label">XP earned so far</div>
+    <button class="failed-btn-primary" id="failed-next-btn" onclick="failedGoNext()">
+      <span id="failed-next-icon">🚀</span><span id="failed-next-label">Continue to Next Mission</span><span>→</span>
+    </button>
+    <button class="failed-btn-secondary" onclick="restartMission()">↺ Start This Mission Again</button>
+  </div>
+</div>
+
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-card">
+    <div class="complete-emoji">🎉</div>
+    <div class="complete-title">Mission Complete!</div>
+    <div class="complete-sub">You built a working Python chatbot that can hold a real conversation.</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
+      <div><div class="complete-xp" id="final-xp">0</div><div class="complete-xp-label">XP earned</div></div>
+    </div>
+    <div class="complete-badges" id="final-badges"></div>
+    <div class="complete-divider"></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Mission Progress</div>
+    <div class="mission-map" id="mission-map-display"></div>
+    <div class="next-preview" id="next-preview" style="display:none">
+      <div class="next-preview-label">⚡ Next Mission</div>
+      <div class="next-preview-title" id="next-mission-title"></div>
+      <div class="next-preview-desc" id="next-mission-desc"></div>
+      <div class="xp-bonus" id="next-xp-bonus"></div>
+    </div>
+    <button class="next-mission-btn" id="next-mission-btn" onclick="goNextMission()">
+      <span id="next-btn-icon">🏆</span><span id="next-btn-label">All Missions Complete!</span>
+    </button>
+    <div class="complete-divider"></div>
+    <button class="pol-btn" onclick="downloadProofOfLearning()">📄 Download Proof of Learning</button>
+    <button class="restart-btn" onclick="restartMission()">🔄 Replay this mission</button>
+  </div>
+</div>
+
+<script>
+const MISSION = {
+  title: 'Chatbot',
+  subtitle: 'Python Mission 4 of 4',
+  nextMission: null,
+  missionMap: [
+    { id:1, title:'Grade Calc',  done:true,  badge:'🐍' },
+    { id:2, title:'Shopping',    done:true,  badge:'🛒' },
+    { id:3, title:'Adventure',   done:true,  badge:'🗡️' },
+    { id:4, title:'Chatbot',     done:false, badge:'🤖' },
+  ],
+  steps: [
+    // ── STEP 0 ────────────────────────────────────────────────
+    {
+      id:0, title:'What is a Chatbot?', xp:10, badge:null,
+      content:`<p class="step-desc">A <strong>chatbot</strong> is a program that reads what the user types and replies with a relevant response. At its core, it is just Python: <code>input()</code> to read, <code>if/elif</code> to decide, and <code>print()</code> to reply.</p>
+<div class="callout">🤖 <strong>What you'll build:</strong><br>
+A chatbot called BYTE that greets the user, answers questions about the time and weather, handles unknown input gracefully, remembers the user's name, and keeps chatting in a loop until told to stop.</div>
+<div class="code-block"><span class="cm"># Sample conversation:</span>
+BYTE: Hello! I am BYTE. What is your name?
+You: Alex
+BYTE: Nice to meet you, Alex!
+You: what time is it
+BYTE: I don't have a clock, but it feels like Python-o'clock!
+You: bye
+BYTE: Goodbye, Alex! See you next time.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'A chatbot reads user input and prints a reply. Which two Python functions are essential for this?',
+        options:['input() and print()','read() and write()','get() and send()','scan() and display()'],
+        correct:0,
+        hint:'Think about the two fundamental I/O functions you have used in every previous mission. One gets data in, one sends data out.',
+        hintCost:5
+      },
+      starterCode:`# Run this to see BYTE say hello
+print("=== BYTE THE CHATBOT ===")
+print("BYTE: Hello! I am BYTE, your Python chatbot.")
+print("BYTE: I am ready to chat.")`,
+      goal:'Run the starter code to see BYTE. Answer the quiz to continue.',
+      goalCheck: null
+    },
+
+    // ── STEP 1 ────────────────────────────────────────────────
+    {
+      id:1, title:'Saying Hello', xp:15, badge:null,
+      content:`<p class="step-desc">Start simple. Ask for the user's name with <code>input()</code>, store it in a variable, and use it in a friendly greeting with an f-string.</p>
+<div class="code-block">name = <span class="fn">input</span>(<span class="str">"BYTE: What is your name? "</span>)
+<span class="fn">print</span>(<span class="str">f"BYTE: Nice to meet you, {name}!"</span>)
+<span class="fn">print</span>(<span class="str">f"BYTE: How can I help you today, {name}?"</span>)</div>
+<div class="callout">💬 Prefixing every chatbot reply with <code>BYTE:</code> makes it clear which lines are the bot's output and which are the user's input — good practice for any conversational program.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Why is it useful to store the user\'s name in a variable rather than just printing it immediately?',
+        options:[
+          'Python requires variables for all input() results',
+          'So you can use the name multiple times throughout the program',
+          'Variables make the program run faster',
+          'print() cannot use input() directly'
+        ],
+        correct:1,
+        hint:'If you store the name, you can use it in greetings, goodbyes, and anywhere else in the program. Without storing it, you would need to ask again every time.',
+        hintCost:5
+      },
+      starterCode:`print("=== BYTE THE CHATBOT ===")
+name = input("BYTE: What is your name? ")
+print(f"BYTE: Nice to meet you, {name}!")
+print(f"BYTE: Great to have you here, {name}. Let's chat!")`,
+      goal:'Use input() to get the user\'s name. Print at least two personalised greetings using the name in f-strings.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('input('))return{pass:false,msg:'❌ Use input() to ask for the user\'s name.'};
+        if(!code.includes('f"')&&!code.includes("f'"))return{pass:false,msg:'❌ Use f-strings to include the name in your replies.'};
+        const nameUses=(code.match(/\{name\}/g)||[]).length;
+        if(nameUses<2)return{pass:false,msg:'❌ Use {name} in f-strings at least twice.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        return{pass:true,msg:'✅ Greeting working — BYTE knows the user\'s name and uses it!'};
+      }
+    },
+
+    // ── STEP 2 ────────────────────────────────────────────────
+    {
+      id:2, title:'Responding to Keywords', xp:20, badge:null,
+      content:`<p class="step-desc">A chatbot checks what the user typed and picks a reply. Use <code>if/elif/else</code> to match keywords and respond appropriately.</p>
+<div class="code-block">message = <span class="fn">input</span>(<span class="str">"You: "</span>).lower()
+
+<span class="kw">if</span> message == <span class="str">"hello"</span>:
+    <span class="fn">print</span>(<span class="str">"BYTE: Hi there!"</span>)
+<span class="kw">elif</span> message == <span class="str">"how are you"</span>:
+    <span class="fn">print</span>(<span class="str">"BYTE: I'm great, thanks for asking!"</span>)
+<span class="kw">elif</span> message == <span class="str">"bye"</span>:
+    <span class="fn">print</span>(<span class="str">"BYTE: Goodbye!"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"BYTE: I don't understand that yet."</span>)</div>
+<div class="callout warn">⚠️ Always use <code>.lower()</code> on the input so "Hello", "HELLO" and "hello" all match the same condition.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Why do we use <code>message.lower()</code> before comparing with <code>== "hello"</code>?',
+        options:[
+          'lower() makes the program faster',
+          'So "Hello", "HELLO" and "hello" all match the same condition',
+          'Python only compares lowercase strings',
+          'input() always returns uppercase'
+        ],
+        correct:1,
+        hint:'String comparison is case-sensitive. Without .lower(), a user typing "Hello" would not match "hello" and would fall through to the else branch.',
+        hintCost:5
+      },
+      starterCode:`message = input("You: ").lower()
+
+if message == "hello":
+    print("BYTE: Hi there! Nice to meet you.")
+elif message == "how are you":
+    print("BYTE: I'm running at full capacity, thanks!")
+elif message == "what is python":
+    print("BYTE: Python is an awesome programming language!")
+elif message == "bye":
+    print("BYTE: Goodbye! Come back soon.")
+else:
+    print("BYTE: Hmm, I don't understand that yet. Try: hello, how are you, what is python, bye")`,
+      goal:'Write if/elif/else to handle at least 4 different messages. Always use .lower() on the input. Include an else for unknown messages.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('.lower()'))return{pass:false,msg:'❌ Use .lower() on the input to handle any capitalisation.'};
+        if(!code.includes('if ')&&!code.includes('elif'))return{pass:false,msg:'❌ Use if/elif/else to check different messages.'};
+        const elifCount=(code.match(/elif/g)||[]).length;
+        if(elifCount<2)return{pass:false,msg:'❌ Add at least 3 elif branches (4 total responses including the else).'};
+        if(!code.includes('else'))return{pass:false,msg:'❌ Add an else branch for messages BYTE doesn\'t recognise.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const tests=['hello','bye','how are you','unknown xyz'];
+        const results=tests.map(t=>runPyLite(code,t));
+        const allDifferent=new Set(results.map(r=>r.output.join(''))).size>=3;
+        if(!allDifferent)return{pass:false,msg:'❌ Make sure at least 3 different inputs produce different responses.'};
+        return{pass:true,msg:'✅ BYTE can respond to multiple keywords — and handles unknown input gracefully!'};
+      }
+    },
+
+    // ── STEP 3 ────────────────────────────────────────────────
+    {
+      id:3, title:'Checking for Keywords with "in"', xp:20, badge:{icon:'🔍',name:'Keyword Spotter',desc:'Used "in" to detect keywords in user messages'},
+      content:`<p class="step-desc">Exact matching (<code>==</code>) is fragile — users rarely type exactly the right thing. The <strong><code>in</code></strong> operator checks whether a word appears <em>anywhere</em> in the message, making your bot much more natural.</p>
+<div class="code-block">message = <span class="fn">input</span>(<span class="str">"You: "</span>).lower()
+
+<span class="kw">if</span> <span class="str">"hello"</span> <span class="kw">in</span> message <span class="kw">or</span> <span class="str">"hi"</span> <span class="kw">in</span> message:
+    <span class="fn">print</span>(<span class="str">"BYTE: Hey! Great to hear from you."</span>)
+<span class="kw">elif</span> <span class="str">"weather"</span> <span class="kw">in</span> message:
+    <span class="fn">print</span>(<span class="str">"BYTE: I can't check outside, but it looks like Python weather!"</span>)
+<span class="kw">elif</span> <span class="str">"time"</span> <span class="kw">in</span> message:
+    <span class="fn">print</span>(<span class="str">"BYTE: No clock here — but it's always time to code!"</span>)</div>
+<div class="callout">✅ Now "say hello" and "hello there" both trigger the greeting. The <code>or</code> operator lets you match multiple keywords in one condition.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Given <code>message = "what is the weather like"</code>, which condition is True?',
+        options:[
+          'message == "weather"',
+          '"weather" in message',
+          'message.startswith("weather")',
+          'message == "what is the weather like".lower()'
+        ],
+        correct:1,
+        hint:'"weather" in message checks whether the substring "weather" appears anywhere in the string. == requires the whole string to match exactly.',
+        hintCost:5
+      },
+      starterCode:`message = input("You: ").lower()
+
+if "hello" in message or "hi" in message:
+    print("BYTE: Hey! Great to hear from you.")
+elif "weather" in message:
+    print("BYTE: I can't check outside, but it's always Python weather!")
+elif "time" in message:
+    print("BYTE: No clock here — but it's always time to code!")
+elif "name" in message:
+    print("BYTE: My name is BYTE. Nice to meet you!")
+elif "bye" in message or "quit" in message:
+    print("BYTE: Goodbye! Happy coding.")
+else:
+    print("BYTE: Interesting... tell me more!")`,
+      goal:'Use "in" to check for keywords. At least one condition must use "or" to match two keywords. Include a catch-all else.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes(' in '))return{pass:false,msg:'❌ Use the "in" operator to check if a keyword appears in the message.'};
+        if(!code.includes(' or '))return{pass:false,msg:'❌ Use "or" in at least one condition to match two different keywords.'};
+        if(!code.includes('else'))return{pass:false,msg:'❌ Include an else branch for unrecognised messages.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const t1=runPyLite(code,'hello there');
+        const t2=runPyLite(code,'what is the weather like today');
+        const t3=runPyLite(code,'hi');
+        if(t1.output.join('')!==t3.output.join(''))return{pass:false,msg:'❌ "hello there" and "hi" should give the same response (both use the hello/hi condition).'};
+        if(!t2.output.join(''))return{pass:false,msg:'❌ "what is the weather like today" should trigger the weather response.'};
+        return{pass:true,msg:'✅ Keyword detection working — BYTE responds naturally to partial phrases!'};
+      }
+    },
+
+    // ── STEP 4 ────────────────────────────────────────────────
+    {
+      id:4, title:'A Chat Loop', xp:25, badge:null,
+      content:`<p class="step-desc">A real chatbot doesn't stop after one reply. Wrap the conversation in a <strong>while loop</strong> so BYTE keeps going until the user types "bye".</p>
+<div class="code-block">chatting = <span class="kw">True</span>
+
+<span class="kw">while</span> chatting:
+    message = <span class="fn">input</span>(<span class="str">"You: "</span>).lower()
+
+    <span class="kw">if</span> <span class="str">"bye"</span> <span class="kw">in</span> message:
+        <span class="fn">print</span>(<span class="str">"BYTE: Goodbye!"</span>)
+        chatting = <span class="kw">False</span>
+    <span class="kw">elif</span> <span class="str">"hello"</span> <span class="kw">in</span> message:
+        <span class="fn">print</span>(<span class="str">"BYTE: Hi there!"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">"BYTE: Tell me more!"</span>)</div>
+<div class="callout warn">⚠️ Make sure "bye" sets <code>chatting = False</code> — otherwise the loop never ends and the program freezes.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'In the chat loop, what stops the while loop from running forever?',
+        options:[
+          'Python automatically stops loops after 100 iterations',
+          'Setting chatting = False when the user types "bye"',
+          'The else branch exits the loop',
+          'input() stops the loop when it gets no input'
+        ],
+        correct:1,
+        hint:'while chatting: keeps looping as long as chatting is True. Only when your code sets chatting = False does the loop end on its next check.',
+        hintCost:5
+      },
+      starterCode:`chatting = True
+
+while chatting:
+    message = input("You: ").lower()
+
+    if "bye" in message or "quit" in message:
+        print("BYTE: Goodbye! It was nice chatting with you.")
+        chatting = False
+    elif "hello" in message or "hi" in message:
+        print("BYTE: Hey! How can I help?")
+    elif "weather" in message:
+        print("BYTE: Looks sunny in Python-land!")
+    elif "time" in message:
+        print("BYTE: It's always time to code!")
+    else:
+        print("BYTE: Interesting! I'm still learning. Try: hello, weather, time, bye")`,
+      goal:'Wrap the chatbot in a while loop that keeps running until the user types "bye". The loop must set chatting = False to exit.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('while'))return{pass:false,msg:'❌ Use a while loop to keep the conversation going.'};
+        if(!code.includes('False')&&!code.includes('break'))return{pass:false,msg:'❌ Set chatting = False (or use break) when the user says bye to exit the loop.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const r=runPyLite(code,'hello\nbye');
+        const out=r.output.join('\n').toLowerCase();
+        if(!out.includes('bye')&&!out.includes('goodbye')&&!out.includes('see you'))return{pass:false,msg:'❌ Typing "bye" should trigger a farewell message and end the loop.'};
+        return{pass:true,msg:'✅ Chat loop working — BYTE keeps the conversation going until you say goodbye!'};
+      }
+    },
+
+    // ── STEP 5 ────────────────────────────────────────────────
+    {
+      id:5, title:'Remembering the User\'s Name', xp:25, badge:{icon:'🧠',name:'Memory Bot',desc:'Built a chatbot that remembers your name'},
+      content:`<p class="step-desc">Combine the name greeting from Step 1 with the chat loop. Ask for the name <em>before</em> the loop starts, then use it inside the loop to make replies personal.</p>
+<div class="code-block">name = <span class="fn">input</span>(<span class="str">"BYTE: Hi! What's your name? "</span>)
+<span class="fn">print</span>(<span class="str">f"BYTE: Great to meet you, {name}!"</span>)
+chatting = <span class="kw">True</span>
+
+<span class="kw">while</span> chatting:
+    message = <span class="fn">input</span>(<span class="str">f"{name}: "</span>).lower()
+    <span class="kw">if</span> <span class="str">"bye"</span> <span class="kw">in</span> message:
+        <span class="fn">print</span>(<span class="str">f"BYTE: Goodbye, {name}! Come back soon."</span>)
+        chatting = <span class="kw">False</span>
+    <span class="kw">elif</span> <span class="str">"hello"</span> <span class="kw">in</span> message:
+        <span class="fn">print</span>(<span class="str">f"BYTE: Hey {name}, what's up?"</span>)</div>
+<div class="callout">💡 Using the name in the input prompt (<code>f"{name}: "</code>) makes it look like a real messaging app — the user sees their own name before what they type.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'The name variable is defined before the while loop. Why is this important?',
+        options:[
+          'Variables defined before a loop are faster to access',
+          'The name is collected once and stays available throughout the loop',
+          'Python cannot use variables inside while loops',
+          'The loop would overwrite the name variable each iteration'
+        ],
+        correct:1,
+        hint:'Variables persist after the line they are created on. Defining name before the loop means every iteration can access it without asking again.',
+        hintCost:5
+      },
+      starterCode:`name = input("BYTE: Hi! What is your name? ")
+print(f"BYTE: Great to meet you, {name}! I'm BYTE.")
+chatting = True
+
+while chatting:
+    message = input(f"{name}: ").lower()
+
+    if "bye" in message:
+        print(f"BYTE: Goodbye, {name}! It was great chatting.")
+        chatting = False
+    elif "hello" in message or "hi" in message:
+        print(f"BYTE: Hey {name}, how's it going?")
+    elif "name" in message:
+        print(f"BYTE: You are {name}, and I am BYTE!")
+    elif "weather" in message:
+        print(f"BYTE: I don't know, {name}, but it's always coding weather!")
+    else:
+        print(f"BYTE: Interesting, {name}. Tell me more!")`,
+      goal:'Ask for the name before the loop. Use the name variable inside the loop — in the prompt and in at least 3 bot replies.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('input('))return{pass:false,msg:'❌ Use input() to ask for the user\'s name before the loop.'};
+        if(!code.includes('while'))return{pass:false,msg:'❌ Keep the while loop in your code.'};
+        const nameInLoop=(code.indexOf('while')<code.lastIndexOf('{name}'));
+        const nameUsesInLoop=(code.slice(code.indexOf('while')).match(/\{name\}/g)||[]).length;
+        if(nameUsesInLoop<3)return{pass:false,msg:'❌ Use {name} inside the while loop at least 3 times in bot replies.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        return{pass:true,msg:'✅ BYTE remembers the user\'s name throughout the whole conversation!'};
+      }
+    },
+
+    // ── STEP 6 ────────────────────────────────────────────────
+    {
+      id:6, title:'A Reply Function', xp:30, badge:{icon:'⚙️',name:'Bot Engineer',desc:'Moved chatbot logic into a get_reply() function'},
+      content:`<p class="step-desc">As the bot grows, the if/elif chain gets long. Move the reply logic into a <strong>function</strong> — <code>get_reply(message)</code> — that takes the message and returns the bot's response. The main loop just calls it.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">get_reply</span>(message):
+    <span class="kw">if</span> <span class="str">"hello"</span> <span class="kw">in</span> message <span class="kw">or</span> <span class="str">"hi"</span> <span class="kw">in</span> message:
+        <span class="kw">return</span> <span class="str">"Hey! Great to hear from you."</span>
+    <span class="kw">elif</span> <span class="str">"weather"</span> <span class="kw">in</span> message:
+        <span class="kw">return</span> <span class="str">"Looks sunny in Python-land!"</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="str">"I'm still learning — try: hello, weather, time, bye"</span>
+
+<span class="cm"># Main loop:</span>
+<span class="kw">while</span> chatting:
+    msg = <span class="fn">input</span>(<span class="str">"You: "</span>).lower()
+    reply = <span class="fn">get_reply</span>(msg)
+    <span class="fn">print</span>(<span class="str">f"BYTE: {reply}"</span>)</div>
+<div class="callout success">✅ Now the loop is clean and simple. All the reply logic lives in <code>get_reply()</code> — easy to expand without cluttering the loop.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What does the get_reply() function return for an unknown message?',
+        options:[
+          'None',
+          'False',
+          'A helpful fallback string',
+          'It raises an error'
+        ],
+        correct:2,
+        hint:'The else branch at the end of get_reply() always returns a fallback string for any message that doesn\'t match a known keyword. This ensures the function always returns something.',
+        hintCost:5
+      },
+      starterCode:`def get_reply(message):
+    if "hello" in message or "hi" in message:
+        return "Hey! Great to hear from you."
+    elif "weather" in message:
+        return "Looks sunny in Python-land!"
+    elif "time" in message:
+        return "It's always time to code!"
+    elif "help" in message:
+        return "I can chat about: hello, weather, time, jokes, bye"
+    elif "joke" in message:
+        return "Why do programmers prefer dark mode? Because light attracts bugs!"
+    else:
+        return "Hmm, I'm still learning. Try: hello, weather, time, help"
+
+# Test the function directly
+print(get_reply("hello there"))
+print(get_reply("what is the weather like"))
+print(get_reply("tell me a joke"))
+print(get_reply("something unknown"))`,
+      goal:'Define get_reply(message) that returns a string reply. Test it with at least 4 different inputs including one unknown message.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('def get_reply'))return{pass:false,msg:'❌ Define a function called get_reply(message).'};
+        if(!code.includes('return'))return{pass:false,msg:'❌ Use return to send the reply back from the function.'};
+        if(!code.includes('else'))return{pass:false,msg:'❌ Add an else branch that returns a fallback reply.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const lines=output.trim().split('\n');
+        if(lines.length<4)return{pass:false,msg:'❌ Test get_reply() with at least 4 different messages and print the results.'};
+        const allSame=new Set(lines).size===1;
+        if(allSame)return{pass:false,msg:'❌ Different inputs should produce different replies.'};
+        return{pass:true,msg:'✅ get_reply() function working — clean separation between logic and the main loop!'};
+      }
+    },
+
+    // ── STEP 7 ────────────────────────────────────────────────
+    {
+      id:7, title:'Counting Messages', xp:25, badge:null,
+      content:`<p class="step-desc">Add a <strong>counter variable</strong> that tracks how many messages the user has sent. Use it to give a different response every 5 messages — a simple way to make the bot feel more alive.</p>
+<div class="code-block">message_count = <span class="num">0</span>
+
+<span class="kw">while</span> chatting:
+    message = <span class="fn">input</span>(<span class="str">"You: "</span>).lower()
+    message_count += <span class="num">1</span>
+
+    <span class="kw">if</span> message_count % <span class="num">5</span> == <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">f"BYTE: Wow, {message_count} messages already! You're chatty 😄"</span>)
+
+    reply = <span class="fn">get_reply</span>(message)
+    <span class="fn">print</span>(<span class="str">f"BYTE: {reply}"</span>)</div>
+<div class="callout">🔢 The <strong>modulo operator <code>%</code></strong> gives the remainder after division. <code>message_count % 5 == 0</code> is True when the count is exactly divisible by 5 (5, 10, 15…).</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What does the expression <code>message_count % 5 == 0</code> check?',
+        options:[
+          'Whether message_count is less than 5',
+          'Whether message_count is a multiple of 5',
+          'Whether message_count equals 0',
+          'Whether message_count divided by 5 gives a decimal'
+        ],
+        correct:1,
+        hint:'% is the modulo (remainder) operator. If message_count % 5 equals 0, there is no remainder — meaning the number divides exactly by 5, so it is a multiple of 5.',
+        hintCost:5
+      },
+      starterCode:`def get_reply(message):
+    if "hello" in message or "hi" in message:
+        return "Hey there!"
+    elif "joke" in message:
+        return "Why do programmers prefer dark mode? Light attracts bugs!"
+    elif "bye" in message:
+        return "QUIT"
+    else:
+        return "Tell me more! (try: hello, joke, bye)"
+
+message_count = 0
+chatting = True
+
+while chatting:
+    message = input("You: ").lower()
+    message_count += 1
+
+    if message_count % 5 == 0:
+        print(f"BYTE: Wow, {message_count} messages! You're very chatty!")
+
+    reply = get_reply(message)
+    if reply == "QUIT":
+        print("BYTE: Goodbye!")
+        chatting = False
+    else:
+        print(f"BYTE: {reply}")`,
+      goal:'Add a message_count variable. Use % to print a special message every 5 messages.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('message_count')&&!code.includes('count'))return{pass:false,msg:'❌ Create a counter variable to track how many messages have been sent.'};
+        if(!code.includes('% 5')&&!code.includes('%5'))return{pass:false,msg:'❌ Use % 5 == 0 to detect every 5th message.'};
+        if(!code.includes('+='))return{pass:false,msg:'❌ Increment the counter inside the loop using +=.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const r=runPyLite(code,'a\nb\nc\nd\ne\nbye');
+        const out=r.output.join('\n');
+        if(!out.includes('5')&&!out.includes('five'))return{pass:false,msg:'❌ After 5 messages, BYTE should print a special message mentioning the count.'};
+        return{pass:true,msg:'✅ Message counter working — BYTE notices when the conversation gets long!'};
+      }
+    },
+
+    // ── STEP 8 ────────────────────────────────────────────────
+    {
+      id:8, title:'A List of Responses', xp:30, badge:null,
+      content:`<p class="step-desc">A chatbot that always gives the same reply to "hello" feels robotic. Store multiple responses in a <strong>list</strong> and use the message count to cycle through them.</p>
+<div class="code-block"><span class="kw">import</span> random
+
+greetings = [
+    <span class="str">"Hey! Good to see you."</span>,
+    <span class="str">"Hi there! What's on your mind?"</span>,
+    <span class="str">"Hello! Ready to chat?"</span>
+]
+
+<span class="cm"># Pick a random greeting:</span>
+reply = random.choice(greetings)
+<span class="fn">print</span>(<span class="str">f"BYTE: {reply}"</span>)</div>
+<div class="callout">🎲 <code>random.choice(list)</code> picks one item at random. This makes the bot feel more natural — it won't give the exact same reply every single time.</div>
+<div class="callout warn">⚠️ <code>import random</code> must be at the very top of your program, before any other code runs.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What does <code>random.choice(greetings)</code> return?',
+        options:[
+          'The entire greetings list',
+          'The index of a random item',
+          'One randomly selected item from the list',
+          'A shuffled copy of the list'
+        ],
+        correct:2,
+        hint:'random.choice() picks and returns exactly one item from the list at random. The list itself is unchanged.',
+        hintCost:5
+      },
+      starterCode:`import random
+
+greetings = [
+    "Hey! Good to see you.",
+    "Hi there! What's on your mind?",
+    "Hello! Ready to chat?",
+    "Greetings, human!"
+]
+
+jokes = [
+    "Why do programmers prefer dark mode? Light attracts bugs!",
+    "How do you comfort a JavaScript developer? You console them.",
+    "Why was the Python developer cold? He left his Windows open!"
+]
+
+def get_reply(message):
+    if "hello" in message or "hi" in message:
+        return random.choice(greetings)
+    elif "joke" in message:
+        return random.choice(jokes)
+    elif "bye" in message:
+        return None
+    else:
+        return "I'm not sure about that. Try: hello, joke, bye"
+
+# Test it several times
+for i in range(4):
+    print(f"BYTE: {get_reply('hello')}")
+
+print("---")
+for i in range(3):
+    print(f"BYTE: {get_reply('tell me a joke')}")`,
+      goal:'Add at least one list of responses. Use random.choice() inside get_reply() to pick from the list. Test it by calling the function multiple times.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('import random'))return{pass:false,msg:'❌ Add "import random" at the top of your code.'};
+        if(!code.includes('random.choice('))return{pass:false,msg:'❌ Use random.choice() to pick a response from a list.'};
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const outLines=output.trim().split('\n').filter(l=>l.trim());
+        if(outLines.length<4)return{pass:false,msg:'❌ Call get_reply() at least 4 times to demonstrate the random variation.'};
+        return{pass:true,msg:'✅ Random responses working — BYTE feels much more natural now!'};
+      }
+    },
+
+    // ── STEP 9 ────────────────────────────────────────────────
+    {
+      id:9, title:'The Complete Chatbot', xp:40, badge:{icon:'🤖',name:'Bot Builder',desc:'Built a complete Python chatbot!'},
+      content:`<p class="step-desc">Bring everything together: the greeting, the name, the chat loop, the <code>get_reply()</code> function with random responses, and the message counter — all in one polished program.</p>
+<div class="code-block"><span class="kw">import</span> random
+
+greetings = [<span class="str">"Hey {name}!"</span>, <span class="str">"Hi {name}, good to see you!"</span>]
+farewells = [<span class="str">"Bye {name}!"</span>, <span class="str">"See you soon, {name}!"</span>]
+
+<span class="kw">def</span> <span class="fn">get_reply</span>(message, name):
+    <span class="kw">if</span> <span class="str">"hello"</span> <span class="kw">in</span> message:
+        <span class="kw">return</span> random.choice(greetings).replace(<span class="str">"{name}"</span>, name)
+    <span class="kw">elif</span> <span class="str">"bye"</span> <span class="kw">in</span> message:
+        <span class="kw">return</span> <span class="kw">None</span>  <span class="cm"># signals loop to end</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="str">f"Interesting, {name}!"</span>
+
+name = <span class="fn">input</span>(<span class="str">"BYTE: What's your name? "</span>)
+count = <span class="num">0</span>
+chatting = <span class="kw">True</span>
+<span class="kw">while</span> chatting:
+    msg = <span class="fn">input</span>(<span class="str">f"{name}: "</span>).lower()
+    count += <span class="num">1</span>
+    reply = <span class="fn">get_reply</span>(msg, name)
+    <span class="kw">if</span> reply <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="fn">print</span>(<span class="str">f"BYTE: {random.choice(farewells).replace('{name}', name)}"</span>)
+        chatting = <span class="kw">False</span>
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">f"BYTE: {reply}"</span>)</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Why does get_reply() return None for "bye" instead of a farewell string?',
+        options:[
+          'None is faster to return than a string',
+          'It signals to the main loop that the conversation should end',
+          'Python crashes if you return a string from a function called in a while loop',
+          'Farewell messages must always be printed inside the function'
+        ],
+        correct:1,
+        hint:'Returning None is a signal. The main loop checks "if reply is None" and knows to print the farewell, set chatting = False, and end the loop. It cleanly separates "what to say" from "should we stop".',
+        hintCost:5
+      },
+      starterCode:`import random
+
+greetings = [
+    "Hey {name}! Good to see you.",
+    "Hi {name}! What can I help with today?",
+    "Hello {name}! Ready to chat?"
+]
+
+jokes = [
+    "Why do programmers prefer dark mode? Light attracts bugs!",
+    "How do you comfort a JavaScript developer? You console them.",
+    "Why was the Python developer cold? He left his Windows open!"
+]
+
+def get_reply(message, name):
+    if "hello" in message or "hi" in message:
+        return random.choice(greetings).replace("{name}", name)
+    elif "joke" in message:
+        return random.choice(jokes)
+    elif "weather" in message:
+        return f"I can't check outside, {name}, but it's always coding weather!"
+    elif "time" in message:
+        return f"No clock here, {name} — but it's always time to code!"
+    elif "name" in message:
+        return f"You are {name} and I am BYTE — nice to meet you!"
+    elif "bye" in message or "quit" in message:
+        return None
+    else:
+        return f"Hmm, {name}, I'm still learning. Try: hello, joke, weather, time, bye"
+
+name = input("BYTE: Hi! What is your name? ")
+print(f"BYTE: Great to meet you, {name}! Type 'bye' to end our chat.")
+count = 0
+chatting = True
+
+while chatting:
+    message = input(f"{name}: ").lower()
+    count += 1
+
+    if count % 5 == 0:
+        print(f"BYTE: Wow {name}, {count} messages — you're very chatty!")
+
+    reply = get_reply(message, name)
+    if reply is None:
+        print(f"BYTE: Goodbye {name}! We chatted {count} times. See you soon!")
+        chatting = False
+    else:
+        print(f"BYTE: {reply}")`,
+      goal:'Assemble the complete chatbot: name input, get_reply() function with random lists, while loop, message counter, and a goodbye ending.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('import random'))return{pass:false,msg:'❌ Include import random at the top.'};
+        if(!code.includes('def get_reply'))return{pass:false,msg:'❌ Include the get_reply() function.'};
+        if(!code.includes('while'))return{pass:false,msg:'❌ Use a while loop for the main chat loop.'};
+        if(!code.includes('random.choice'))return{pass:false,msg:'❌ Use random.choice() to pick from a list of responses.'};
+        if(!code.includes('% 5')||!code.includes('% 5')){
+          if(!code.includes('%'))return{pass:false,msg:'❌ Include the message counter with % to detect every 5th message.'};
+        }
+        if(output.includes('Error'))return{pass:false,msg:'❌ There is an error — check the output panel.'};
+        const r=runPyLite(code,'Alex\nhello\njoke\nbye');
+        const out=r.output.join('\n').toLowerCase();
+        if(!out.includes('alex'))return{pass:false,msg:'❌ The chatbot should use the user\'s name in its replies.'};
+        if(!out.includes('bye')&&!out.includes('goodbye')&&!out.includes('see you'))return{pass:false,msg:'❌ Typing "bye" should end the conversation with a farewell message.'};
+        return{pass:true,msg:'✅ Complete chatbot built — greetings, memory, random responses, a counter, and a proper goodbye. Mission complete!'};
+      }
+    }
+  ]
+};
+
+let GS={xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
+let editors={};
+let STUDENT={name:'',classCode:''};
+
+function runPyLite(code,inputVal){
+  const inputLines=String(inputVal).split('\n');let inputIdx=0;
+  const output=[];let error=null;const vars={};const funcs={};
+  // random module support
+  const randomModule={choice:(arr)=>arr[Math.floor(Math.random()*arr.length)],randint:(a,b)=>Math.floor(Math.random()*(b-a+1))+a};
+  function pyInput(prompt){if(prompt!==undefined&&prompt!=='')output.push(String(prompt));const v=inputLines[inputIdx]!==undefined?inputLines[inputIdx].trim():'';inputIdx++;output.push(v);return v;}
+  function getIndent(line){return line.match(/^( *)/)[1].length;}
+  function stripComment(line){let inStr=false,sc='';for(let j=0;j<line.length;j++){const c=line[j];if(!inStr&&(c==='"'||c==="'")) {inStr=true;sc=c;}else if(inStr&&c===sc)inStr=false;else if(!inStr&&c==='#')return line.slice(0,j);}return line;}
+  function splitCommaArgs(s){const parts=[];let cur='',depth=0,inStr=false,sc='';for(let i=0;i<s.length;i++){const c=s[i];if(inStr){cur+=c;if(c===sc)inStr=false;continue;}if(c==='"'||c==="'"){inStr=true;sc=c;cur+=c;continue;}if(c==='('||c==='['){depth++;cur+=c;continue;}if(c===')'||c===']'){depth--;cur+=c;continue;}if(c===','&&depth===0){parts.push(cur.trim());cur='';continue;}cur+=c;}if(cur.trim())parts.push(cur.trim());return parts;}
+  function evalExpr(expr){
+    expr=expr.trim();if(!expr)return'';
+    if(expr.startsWith('f"')||expr.startsWith("f'")){const inner=expr.slice(2,-1);return inner.replace(/\{([^}]+)\}/g,(_,e)=>{const fmtM=e.match(/^(.+):\.(\d+)f$/);if(fmtM){const v=evalExpr(fmtM[1].trim());return Number(v).toFixed(parseInt(fmtM[2]));}return String(evalExpr(e.trim()));});}
+    if((expr.startsWith('"')&&expr.endsWith('"'))||(expr.startsWith("'")&&expr.endsWith("'"))){return expr.slice(1,-1).replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');}
+    if(expr.startsWith('[')&&expr.endsWith(']')){const inner=expr.slice(1,-1).trim();if(!inner)return[];return splitCommaArgs(inner).map(e=>evalExpr(e));}
+    if(expr==='True')return true;if(expr==='False')return false;if(expr==='None')return null;
+    if(/^-?\d+$/.test(expr))return parseInt(expr,10);
+    if(/^-?\d+\.\d+$/.test(expr))return parseFloat(expr);
+    const ternM=expr.match(/^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$/);if(ternM)return evalExpr(ternM[2])?evalExpr(ternM[1]):evalExpr(ternM[3]);
+    const idxM=expr.match(/^([a-zA-Z_]\w*)\[(.+)\]$/);if(idxM){const lst=evalExpr(idxM[1]);const i=evalExpr(idxM[2]);if(!Array.isArray(lst))throw`TypeError`;const idx=i<0?lst.length+i:i;if(idx<0||idx>=lst.length)throw`IndexError: list index out of range`;return lst[idx];}
+    // random.choice / random.randint
+    const randM=expr.match(/^random\.(choice|randint)\((.*)\)$/s);
+    if(randM){const args=randM[2].trim()?splitCommaArgs(randM[2]).map(a=>evalExpr(a)):[];if(randM[1]==='choice')return randomModule.choice(args[0]);if(randM[1]==='randint')return randomModule.randint(args[0],args[1]);}
+    const methodM=expr.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
+    if(methodM){const obj=evalExpr(methodM[1]);const method=methodM[2];const args=methodM[3].trim()?splitCommaArgs(methodM[3]).map(a=>evalExpr(a)):[];
+      if(typeof obj==='string'){if(method==='upper')return obj.toUpperCase();if(method==='lower')return obj.toLowerCase();if(method==='strip')return obj.trim();if(method==='replace')return obj.replaceAll(String(args[0]),String(args[1]));if(method==='split')return args.length?obj.split(String(args[0])):obj.trim().split(/\s+/);if(method==='startswith')return obj.startsWith(String(args[0]));if(method==='endswith')return obj.endsWith(String(args[0]));}
+      if(Array.isArray(obj)){if(method==='append'){obj.push(args[0]);return null;}if(method==='pop')return args.length?obj.splice(args[0],1)[0]:obj.pop();if(method==='remove'){const i=obj.indexOf(args[0]);if(i>-1)obj.splice(i,1);return null;}if(method==='sort'){obj.sort((a,b)=>a-b);return null;}if(method==='reverse'){obj.reverse();return null;}if(method==='count')return obj.filter(x=>x===args[0]).length;}
+      throw`AttributeError: no method '${method}'`;}
+    const call=expr.match(/^([a-zA-Z_]\w*)\((.*)\)$/s);
+    if(call){const fname=call[1];const argsStr=call[2].trim();const args=argsStr?splitCommaArgs(argsStr).map(a=>evalExpr(a)):[];
+      if(fname==='print'){evalPrint(argsStr);return null;}
+      if(fname==='input')return pyInput(argsStr?evalExpr(argsStr):'');
+      if(fname==='int'){const v=args[0];const n=parseInt(v,10);if(isNaN(n))throw`ValueError`;return n;}
+      if(fname==='float'){const v=args[0];const n=parseFloat(v);if(isNaN(n))throw`ValueError`;return n;}
+      if(fname==='str')return String(args[0]);if(fname==='bool')return Boolean(args[0]);
+      if(fname==='len'){const v=args[0];return Array.isArray(v)?v.length:String(v).length;}
+      if(fname==='sum'){const v=args[0];if(!Array.isArray(v))throw'TypeError';return v.reduce((a,b)=>a+b,0);}
+      if(fname==='max'){const v=Array.isArray(args[0])?args[0]:args;return Math.max(...v);}
+      if(fname==='min'){const v=Array.isArray(args[0])?args[0]:args;return Math.min(...v);}
+      if(fname==='abs')return Math.abs(args[0]);
+      if(fname==='round')return args.length>1?parseFloat(Number(args[0]).toFixed(args[1])):Math.round(args[0]);
+      if(fname==='range'){const[start,stop,step]=args.length===1?[0,args[0],1]:args.length===2?[args[0],args[1],1]:args;const r=[];for(let i=start;step>0?i<stop:i>stop;i+=step)r.push(i);return r;}
+      if(fname==='list'){const v=args[0];return Array.isArray(v)?[...v]:v?[...String(v)]:[]; }
+      if(fname==='type'){const v=args[0];if(Array.isArray(v))return"<class 'list'>";if(typeof v==='boolean')return"<class 'bool'>";if(Number.isInteger(v)&&typeof v==='number')return"<class 'int'>";if(typeof v==='number')return"<class 'float'>";return"<class 'str'>";}
+      if(fname in funcs){const fn=funcs[fname];const savedVars={};fn.params.forEach((p,idx)=>{if(p in vars)savedVars[p]=vars[p];vars[p]=args[idx]!==undefined?args[idx]:null;});const sig={};try{execLines(fn.body.map(l=>l.slice(fn.indent+4>0?fn.indent+4:4)),0,sig);}catch(e){if(e!==sig)throw e;}fn.params.forEach(p=>{if(p in savedVars)vars[p]=savedVars[p];else delete vars[p];});return'val'in sig?sig.val:null;}
+      throw`NameError: name '${fname}' is not defined`;}
+    function findOp(expr,op){let depth=0,inStr=false,sc='';for(let i=expr.length-op.length;i>=0;i--){const c=expr[i];if(inStr){if(c===sc)inStr=false;continue;}if(c==='"'||c==="'"){inStr=true;sc=c;continue;}if(c===')'||c===']')depth++;if(c==='('||c==='[')depth--;if(depth===0&&expr.slice(i,i+op.length)===op){const pre=i>0?expr[i-1]:'';const post=expr[i+op.length]||'';if(op==='>'&&(post==='='||pre==='-'))continue;if(op==='<'&&(post==='='||pre==='-'))continue;if(op==='='&&(pre==='>'||pre==='<'||pre==='!'||pre==='='))continue;if(op==='='&&post==='=')continue;if(op==='/'&&post==='/')continue;if(op==='-'&&(pre===''||'(+-*/<>=![,'.includes(pre)))continue;if(['in','and','or','not in','is'].includes(op)){if(/[a-zA-Z0-9_]/.test(pre)||/[a-zA-Z0-9_]/.test(post))continue;}return i;}}return-1;}
+    const ops=[['not in',(a,b)=>Array.isArray(b)?!b.includes(a):!String(b).includes(String(a))],['in',(a,b)=>Array.isArray(b)?b.includes(a):String(b).includes(String(a))],['is not',(a,b)=>a!==b],['is',(a,b)=>a===b],['and',(a,b)=>a&&b],['or',(a,b)=>a||b],['>=', (a,b)=>a>=b],['<=',(a,b)=>a<=b],['==',(a,b)=>a==b],['!=',(a,b)=>a!=b],['>',(a,b)=>a>b],['<',(a,b)=>a<b],['+',(a,b)=>(typeof a==='string'||typeof b==='string')?String(a)+String(b):(Array.isArray(a)&&Array.isArray(b))?[...a,...b]:a+b],['-',(a,b)=>a-b],['*',(a,b)=>a*b],['//',(a,b)=>Math.floor(a/b)],['/',(a,b)=>a/b],['%',(a,b)=>a%b]];
+    for(const[op,fn]of ops){const idx=findOp(expr,op);if(idx!==-1){const L=evalExpr(expr.slice(0,idx));const R=evalExpr(expr.slice(idx+op.length));return fn(L,R);}}
+    if(expr.startsWith('not '))return!evalExpr(expr.slice(4));
+    if(/^[a-zA-Z_]\w*$/.test(expr)){if(expr in vars)return vars[expr];throw`NameError: name '${expr}' is not defined`;}
+    throw`SyntaxError: could not parse: ${expr}`;
+  }
+  function evalPrint(argsStr){const sepM=argsStr.match(/,\s*sep\s*=\s*["']([^"']*)["']/);const sep=sepM?sepM[1]:' ';const clean=argsStr.replace(/,?\s*(sep|end)\s*=\s*["'][^"']*["']/g,'');if(!clean.trim()){output.push('');return;}const parts=splitCommaArgs(clean).map(p=>{const v=evalExpr(p);if(typeof v==='boolean')return v?'True':'False';if(v===null)return'None';if(Array.isArray(v))return'['+v.map(x=>{if(typeof x==='boolean')return x?'True':'False';if(typeof x==='string')return`'${x}'`;return x;}).join(', ')+']';return String(v);});output.push(parts.join(sep));}
+  const lines=code.split('\n');
+  function execLines(lineArr,baseIndent,returnSignal){
+    let i=0;
+    while(i<lineArr.length){
+      const raw=lineArr[i];const stripped=stripComment(raw).trimEnd();const content=stripped.trim();i++;if(!content)continue;const indent=getIndent(stripped);
+      // import random — handled
+      if(content==='import random'||content.startsWith('import random'))continue;
+      const defM=content.match(/^def\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*:$/);
+      if(defM){const fname=defM[1];const params=defM[2].trim()?defM[2].split(',').map(p=>p.trim()):[];const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){body.push(lineArr[ci]);ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;funcs[fname]={params,body,indent};continue;}
+      if(content==='pass')continue;
+      const retM=content.match(/^return\s*(.*)$/);
+      if(retM&&returnSignal){if(retM[1].trim().includes(',')&&!retM[1].trim().startsWith('[')){returnSignal.val=splitCommaArgs(retM[1].trim()).map(v=>evalExpr(v.trim()));}else{returnSignal.val=retM[1].trim()?evalExpr(retM[1].trim()):null;}throw returnSignal;}
+      if(/^(if|elif)\s+.+:$/.test(content)||/^else\s*:$/.test(content)){
+        const chain=[];let ci=i-1;
+        while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();const cs=cl.trim();if(!cs){ci++;continue;}const clIndent=getIndent(cl);if(clIndent<indent)break;if(clIndent===indent){const im=cs.match(/^if\s+(.+):$/);const em=cs.match(/^elif\s+(.+):$/);const om=cs.match(/^else\s*:$/);if(im){chain.push({cond:im[1],body:[]});ci++;}else if(em){chain.push({cond:em[1],body:[]});ci++;}else if(om){chain.push({cond:null,body:[]});ci++;}else if(chain.length)break;else ci++;}else if(chain.length){chain[chain.length-1].body.push(lineArr[ci]);ci++;}else ci++;}
+        i=ci;for(const branch of chain){if(branch.cond===null||!!evalExpr(branch.cond)){execLines(branch.body.map(l=>l.slice(indent+4)),0,returnSignal);break;}}continue;}
+      const forM=content.match(/^for\s+([a-zA-Z_]\w*)\s+in\s+(.+):$/);
+      if(forM){const varName=forM[1];const iterable=evalExpr(forM[2]);const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;const iter=Array.isArray(iterable)?iterable:[];for(const val of iter){vars[varName]=val;execLines(body.map(l=>l.slice(indent+4)),0,returnSignal);}continue;}
+      const whileM=content.match(/^while\s+(.+):$/);
+      if(whileM){const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;let guard=0;while(evalExpr(whileM[1])&&guard++<1000){execLines(body.map(l=>l.slice(indent+4)),0,returnSignal);}continue;}
+      const tupleUnpack=content.match(/^([a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)+)\s*=\s*(.+)$/);
+      if(tupleUnpack){const names=tupleUnpack[1].split(',').map(n=>n.trim());const val=evalExpr(tupleUnpack[2].trim());const vals=Array.isArray(val)?val:[val];names.forEach((n,idx)=>{vars[n]=vals[idx]!==undefined?vals[idx]:null;});continue;}
+      const augM=content.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=)\s*(.+)$/);
+      if(augM){const cur=vars[augM[1]]!==undefined?vars[augM[1]]:0;const rhs=evalExpr(augM[3]);if(augM[2]==='+=')vars[augM[1]]=(typeof cur==='string'||typeof rhs==='string')?String(cur)+String(rhs):cur+rhs;if(augM[2]==='-=')vars[augM[1]]=cur-rhs;if(augM[2]==='*=')vars[augM[1]]=cur*rhs;if(augM[2]==='/=')vars[augM[1]]=cur/rhs;continue;}
+      const listAssignM=content.match(/^([a-zA-Z_]\w*)\[(.+)\]\s*=\s*(.+)$/);
+      if(listAssignM){const lst=vars[listAssignM[1]];if(!Array.isArray(lst))throw`TypeError`;const idx=evalExpr(listAssignM[2]);vars[listAssignM[1]][idx]=evalExpr(listAssignM[3]);continue;}
+      const assignM=content.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/s);
+      if(assignM&&!['if','elif','else','while','for'].includes(assignM[1])){vars[assignM[1]]=evalExpr(assignM[2].trim());continue;}
+      const printM=content.match(/^print\((.*)\)$/s);if(printM){evalPrint(printM[1]);continue;}
+      const stmtMethod=content.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);if(stmtMethod){evalExpr(content);continue;}
+      try{evalExpr(content);}catch(e){throw String(e);}
+    }
+  }
+  try{execLines(lines,0);}catch(e){error=String(e);}
+  return{output,error};
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function handleTab(e){if(e.key==='Tab'){e.preventDefault();const ta=e.target;const start=ta.selectionStart;ta.value=ta.value.slice(0,start)+'    '+ta.value.slice(ta.selectionEnd);ta.selectionStart=ta.selectionEnd=start+4;}}
+function runPython(stepId){const ed=editors[stepId];if(!ed)return;const code=ed.getValue();const outEl=document.getElementById(`output-${stepId}`);const runBtn=document.getElementById(`run-btn-${stepId}`);const stdinVal=document.getElementById(`stdin-${stepId}`)?.value||'';outEl.innerHTML='<span class="output-placeholder">Running...</span>';runBtn.disabled=true;setTimeout(()=>{try{const result=runPyLite(code,stdinVal);ed._lastOutput=result.output.join('\n');ed._lastInput=stdinVal;if(result.error){outEl.innerHTML=`<span class="output-error">⚠️ ${escHtml(result.error)}</span>`;}else if(result.output.length===0){outEl.innerHTML='<span class="output-placeholder">✓ Ran with no output.</span>';}else{outEl.innerHTML=result.output.map(l=>`<span class="output-line">${escHtml(l)}</span>`).join('\n');}}catch(e){outEl.innerHTML=`<span class="output-error">⚠️ ${escHtml(String(e))}</span>`;}runBtn.disabled=false;},30);}
+function checkCode(stepId){const step=MISSION.steps[stepId];if(!step.goalCheck)return;if(GS.codeChecked.has(stepId))return;const ed=editors[stepId];if(!ed)return;const code=ed.getValue();const output=ed._lastOutput||'';const inputVal=ed._lastInput||'';const result=step.goalCheck(code,output,inputVal);const resEl=document.getElementById(`code-result-${stepId}`);resEl.className='code-result '+(result.pass?'pass':'fail');resEl.textContent=result.msg;if(result.pass){GS.codeChecked.add(stepId);awardXP(10,true);maybeCompleteStep(stepId);}}
+function maybeCompleteStep(stepId){const quizDone=GS.quizAnswered.has(stepId);const step=MISSION.steps[stepId];const codeDone=!step.goalCheck||GS.codeChecked.has(stepId);if(quizDone&&codeDone&&!GS.completedSteps.has(stepId)){GS.completedSteps.add(stepId);updateProgress();buildNav();if(step.badge)showBadge(step.badge);const btn=document.getElementById(`unlock-btn-${stepId}`);if(btn)btn.classList.add('visible');}}
+function resetCode(idx){const step=MISSION.steps[idx];editors[idx]?.setValue(step.starterCode);const out=document.getElementById(`output-${idx}`);if(out)out.innerHTML='<span class="output-placeholder">Click ▶ Run to execute your Python code...</span>';const res=document.getElementById(`code-result-${idx}`);if(res){res.className='code-result';res.textContent='';}}
+function checkMCQ(stepIdx,chosen){if(GS.quizAnswered.has(stepIdx))return;const step=MISSION.steps[stepIdx];const correct=chosen===step.challenge.correct;if(correct){step.challenge.options.forEach((_,i)=>{const btn=document.getElementById(`opt-${stepIdx}-${i}`);if(!btn)return;btn.disabled=true;if(i===step.challenge.correct)btn.classList.add('correct');});awardXP(step.xp,true);GS.quizAnswered.add(stepIdx);maybeCompleteStep(stepIdx);}else{loseLife();const wrongBtn=document.getElementById(`opt-${stepIdx}-${chosen}`);if(wrongBtn){wrongBtn.disabled=true;wrongBtn.classList.add('wrong');setTimeout(()=>{wrongBtn.classList.remove('wrong');wrongBtn.disabled=true;wrongBtn.style.opacity='0.4';},800);}}}
+function nextStep(currentIdx){const next=currentIdx+1;if(next>=MISSION.steps.length){completeMission();return;}GS.currentStep=next;renderStep(next);buildNav();}
+function awardXP(amt,popup=false){GS.xp=Math.max(0,GS.xp+amt);document.getElementById('xp-count').textContent=GS.xp;if(popup&&amt>0){const el=document.createElement('div');el.className='xp-pop';el.textContent='+'+amt+' XP';const r=document.getElementById('xp-count').getBoundingClientRect();el.style.left=r.left+'px';el.style.top=(r.top+window.scrollY-10)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);}}
+function loseLife(){GS.lives=Math.max(0,GS.lives-1);document.getElementById('lives-display').textContent=['💀','❤️','❤️❤️','❤️❤️❤️'][GS.lives]||'💀';if(GS.lives===0)setTimeout(missionFailed,900);}
+function missionFailed(){const step=MISSION.steps[GS.currentStep];document.getElementById('failed-xp').textContent=GS.xp;document.getElementById('failed-step-info').textContent=`You were on Step ${GS.currentStep+1}: "${step.title}"`;document.getElementById('failed-next-btn').style.display='none';document.getElementById('failed-overlay').classList.add('show');}
+function failedGoNext(){document.getElementById('failed-overlay').classList.remove('show');goNextMission();}
+function showHint(idx){if(GS.hintUsed.includes(idx))return;GS.hintUsed.push(idx);awardXP(-MISSION.steps[idx].challenge.hintCost);const el=document.getElementById(`hint-${idx}`);const btn=el?.previousElementSibling?.querySelector('.hint-btn');if(el)el.classList.add('visible');if(btn){btn.disabled=true;btn.style.opacity='.5';btn.textContent='💡 Hint shown';}}
+function updateProgress(){const pct=Math.round(GS.completedSteps.size/MISSION.steps.length*100);document.getElementById('master-fill').style.width=pct+'%';document.getElementById('master-pct').textContent=pct+'%';}
+function showBadge(badge){GS.badges.push(badge);const toast=document.getElementById('badge-toast');document.getElementById('badge-icon').textContent=badge.icon;document.getElementById('badge-title').textContent=badge.name+' — Unlocked!';document.getElementById('badge-sub').textContent=badge.desc;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3500);}
+function completeMission(){localStorage.setItem('ks3_mission_4',JSON.stringify({xp:GS.xp,badges:GS.badges.map(b=>b.name),completedAt:new Date().toISOString()}));document.getElementById('final-xp').textContent=GS.xp;document.getElementById('final-badges').innerHTML=GS.badges.length?GS.badges.map(b=>`<div class="complete-badge">${b.icon} ${b.name}</div>`).join(''):'';const mapEl=document.getElementById('mission-map-display');mapEl.innerHTML=MISSION.missionMap.map(m=>{const isCurrent=m.id===4;const isDone=m.done||isCurrent;return`<div class="mm-item ${isDone?'done':''} ${isCurrent?'current':''}">${isDone?'<div class="mm-check">✓</div>':''}<div class="mm-icon">${m.badge}</div><div class="mm-label">M${m.id}</div></div>`;}).join('');document.getElementById('next-preview').style.display='none';document.getElementById('next-mission-btn').innerHTML='🏆 All Missions Complete!';document.getElementById('next-mission-btn').onclick=null;document.getElementById('complete-overlay').classList.add('show');}
+function goNextMission(){}
+function restartMission(){GS={xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};editors={};document.getElementById('complete-overlay').classList.remove('show');document.getElementById('failed-overlay').classList.remove('show');document.getElementById('xp-count').textContent='0';document.getElementById('lives-display').textContent='❤️❤️❤️';updateProgress();buildNav();renderStep(0);}
+function setFilter(t){if(t==='ng'){document.body.classList.remove('superpower');document.body.classList.toggle('nature-green');}else{document.body.classList.remove('nature-green');document.body.classList.toggle('superpower');}}
+function doLogin(){const name=document.getElementById('login-name').value.trim();const code=document.getElementById('login-class').value.trim();const errEl=document.getElementById('login-error');if(!name||!code){errEl.classList.add('show');return;}errEl.classList.remove('show');STUDENT.name=name;STUDENT.classCode=code.toUpperCase();const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);document.getElementById('student-avatar').textContent=initials;document.getElementById('student-name-display').textContent=name+' · '+STUDENT.classCode;document.getElementById('student-chip').style.display='flex';document.getElementById('login-overlay').classList.add('hidden');}
+function downloadProofOfLearning(){const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});const time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});const stepSections=MISSION.steps.map((step,idx)=>{if(!GS.completedSteps.has(idx))return'';const code=editors[idx]?.getValue()||'# (no code recorded)';const escaped=code.replace(/</g,'&lt;').replace(/>/g,'&gt;');return`<div class="step-section"><div class="step-header"><span class="step-num">Step ${idx+1}</span><span class="step-name">${step.title}</span><span class="step-xp">+${step.xp} XP</span></div><pre class="code-block">${escaped}</pre></div>`;}).join('');const badgesHtml=GS.badges.length?GS.badges.map(b=>`<div class="badge-item">${b.icon} <strong>${b.name}</strong><span>${b.desc}</span></div>`).join(''):'<div class="badge-item">—</div>';const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Proof of Learning — ${STUDENT.name}</title><style>@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:#1a202c;padding:32px;max-width:860px;margin:0 auto;}.certificate{background:#fff;border-radius:20px;box-shadow:0 4px 32px rgba(0,0,0,.1);overflow:hidden;}.cert-header{background:linear-gradient(135deg,#010801,#0a1a0a);color:#fff;padding:36px 40px;text-align:center;}.cert-school{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#86efac;margin-bottom:8px;}.cert-title{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:#4ade80;margin-bottom:6px;}.cert-sub{font-size:14px;color:#86efac;}.cert-body{padding:36px 40px;}.student-block{display:flex;align-items:center;gap:20px;background:#f7fafc;border:2px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:28px;}.student-avatar{width:56px;height:56px;border-radius:50%;background:#4ade80;color:#000;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;flex-shrink:0;}.student-name{font-size:22px;font-weight:700;}.student-meta{font-size:13px;color:#718096;margin-top:3px;}.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}.stat-card{background:#f7fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;}.stat-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:#4ade80;}.stat-label{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-top:4px;}.section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#718096;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}.badges-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}.badge-item{display:flex;align-items:baseline;gap:10px;background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:10px 14px;font-size:14px;}.step-section{margin-bottom:20px;}.step-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}.step-num{font-family:'Space Mono',monospace;font-size:10px;background:#010801;color:#4ade80;padding:2px 8px;border-radius:4px;}.step-name{font-weight:700;font-size:15px;flex:1;}.step-xp{font-family:'Space Mono',monospace;font-size:11px;color:#38a169;background:#f0fff4;border:1px solid #9ae6b4;border-radius:20px;padding:2px 8px;}.code-block{background:#010801;color:#86efac;font-family:'Space Mono',monospace;font-size:12px;line-height:1.8;padding:16px;border-radius:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}.cert-footer{background:#f7fafc;border-top:1px solid #e2e8f0;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#718096;}.footer-stamp{font-family:'Space Mono',monospace;font-size:10px;color:#a0aec0;text-align:right;}@media print{body{padding:0;background:#fff;}.certificate{box-shadow:none;}}</style></head><body><div class="certificate"><div class="cert-header"><div class="cert-school">Corby Business Academy — Computer Science</div><div class="cert-title">Proof of Learning</div><div class="cert-sub">Chatbot · Python Mission 4 of 4</div></div><div class="cert-body"><div class="student-block"><div class="student-avatar">${STUDENT.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div><div><div class="student-name">${STUDENT.name}</div><div class="student-meta">Class: ${STUDENT.classCode} · Completed: ${date} at ${time}</div></div></div><div class="stats-row"><div class="stat-card"><div class="stat-val">${GS.xp}</div><div class="stat-label">XP Earned</div></div><div class="stat-card"><div class="stat-val">${GS.completedSteps.size}/${MISSION.steps.length}</div><div class="stat-label">Steps Done</div></div><div class="stat-card"><div class="stat-val">${GS.badges.length}</div><div class="stat-label">Badges</div></div></div><div class="section-title">Badges Earned</div><div class="badges-grid">${badgesHtml}</div><div class="section-title">Code Written — Step by Step</div>${stepSections}</div><div class="cert-footer"><div>🤖 Chatbot · Corby Business Academy</div><div class="footer-stamp">Generated ${date} ${time}<br>Student: ${STUDENT.name} · ${STUDENT.classCode}</div></div></div></body></html>`;const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`proof_of_learning_${STUDENT.name.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${STUDENT.classCode.toLowerCase()}.html`;a.click();URL.revokeObjectURL(url);}
+
+function buildNav(){const nav=document.getElementById('step-nav');nav.innerHTML='';MISSION.steps.forEach((step,i)=>{const locked=i>0&&!GS.completedSteps.has(i-1);const completed=GS.completedSteps.has(i);const active=GS.currentStep===i;const isLast=i===MISSION.steps.length-1;nav.innerHTML+=`<div class="step-node ${completed?'completed':''} ${active?'active':''} ${locked?'locked':''}" onclick="navToStep(${i})">${!isLast?'<div class="step-connector"></div>':''}<div class="step-dot">${completed?'✓':(i+1)}</div><div><div class="step-name">${step.title}</div><div class="step-xp">${completed?'✓ '+step.xp+' XP':'+'+step.xp+' XP'}</div></div></div>`;});}
+function navToStep(i){if(i>0&&!GS.completedSteps.has(i-1))return;GS.currentStep=i;renderStep(i);buildNav();}
+function renderStep(idx){const step=MISSION.steps[idx];const ch=step.challenge;const qDone=GS.quizAnswered.has(idx);const cDone=GS.codeChecked.has(idx);const needsCode=!!step.goalCheck;const unlockReady=qDone&&(!needsCode||cDone);const hintUsed=GS.hintUsed.includes(idx);
+  const optsHtml=ch.options.map((o,i)=>`<button class="opt-btn ${qDone&&i===ch.correct?'correct':''}" id="opt-${idx}-${i}" onclick="checkMCQ(${idx},${i})" ${qDone?'disabled':''}>${o}</button>`).join('');
+  const stdinDefaults=['','Alex','hello','hello','Alex\nhello\nbye','Alex\nhello\nbye','hello\nweather\nbye','a\nb\nc\nd\ne\nbye','','Alex\nhello\njoke\nbye'];
+  const needsInput=[1,2,3,4,5,6,7,9].includes(idx);
+  const inputHint=needsInput?`<div class="input-row"><span class="input-label">Input:</span><input class="stdin-input" id="stdin-${idx}" type="text" placeholder="User input (one reply per line)" value="${stdinDefaults[idx]||''}"/><span class="stdin-hint">← simulated user messages</span></div>`:'';
+  const html=`
+  <div class="mission-card"><div class="card-header"><span class="card-step-badge">Step ${idx+1} of ${MISSION.steps.length}</span><span class="card-xp-badge">+${step.xp} XP</span></div>
+  <div class="card-body"><h2 class="step-title">${step.title}</h2>${step.content}
+  <div class="challenge-box"><div class="challenge-label">Quiz challenge — +${step.xp} XP</div>
+  <div class="challenge-q">${ch.q}</div><div class="options-grid">${optsHtml}</div>
+  <div class="hint-row"><button class="hint-btn" onclick="showHint(${idx})" ${hintUsed?'disabled style="opacity:.5"':''}>💡 ${hintUsed?'Hint shown':`Hint (−${ch.hintCost} XP)`}</button></div>
+  <div class="hint-text ${hintUsed?'visible':''}" id="hint-${idx}">${ch.hint}</div>
+  <button class="unlock-btn ${unlockReady?'visible':''}" id="unlock-btn-${idx}" onclick="nextStep(${idx})">${idx===MISSION.steps.length-1?'🎉 Complete Mission!':'🔓 Unlock Next Step →'}</button>
+  </div></div></div>
+  <div class="editor-panel"><div class="editor-header"><span class="editor-title">Python Editor</span><span style="font-size:11px;color:var(--muted)">Write your code, then click Run ▶</span></div>
+  <div class="editor-wrap"><textarea class="code-editor" id="editor-${idx}" spellcheck="false" onkeydown="handleTab(event)">${escHtml(step.starterCode)}</textarea></div>
+  ${inputHint}
+  <div class="run-bar">
+    <button class="run-btn" id="run-btn-${idx}" onclick="runPython(${idx})">▶ Run</button>
+    ${needsCode?`<button class="check-code-btn" id="check-code-btn-${idx}" onclick="checkCode(${idx})" ${cDone?'disabled':''}>${cDone?'✓ Code Checked':'✔ Check My Code'}</button>`:''}
+    <button class="reset-btn" onclick="resetCode(${idx})">↺ Reset</button>
+  </div>
+  <div class="output-panel" id="output-${idx}"><span class="output-placeholder">Click ▶ Run to execute your Python code...</span></div>
+  ${needsCode?`<div class="code-result" id="code-result-${idx}"></div>`:''}
+  <div class="goal-box">🎯 <strong>Goal:</strong> ${step.goal}</div></div>`;
+  document.getElementById('centre-panel').innerHTML=html;window.scrollTo({top:0,behavior:'smooth'});
+  const ta=document.getElementById(`editor-${idx}`);editors[idx]={getValue:()=>ta.value,setValue:(v)=>{ta.value=v;},_lastOutput:'',_lastInput:''};}
+
+function init(){buildNav();renderStep(0);}
+init();
+</script>
+</body>
+</html>

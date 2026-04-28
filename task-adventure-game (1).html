@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission: Adventure Game — Python</title>
+<style>
+:root{--bg:#1a0a2e;--surface:#0d0820;--surface2:#1a1035;--surface3:#251848;--border:#3d2870;--text:#e8e0ff;--muted:#8a7ab0;--accent:#c084fc;--accent2:#a78bfa;--success:#4ade80;--danger:#f87171;--warn:#fb923c;--mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;}
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+.topbar{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.mission-tag{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;background:rgba(192,132,252,.12);border:1px solid rgba(192,132,252,.3);padding:3px 10px;border-radius:3px;}
+.mission-title{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.xp-display{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;color:var(--accent);}
+.lives-display{display:flex;align-items:center;gap:4px;font-size:16px;}
+.master-progress{width:100%;background:var(--surface);padding:8px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.mp-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.mp-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mp-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;}
+.mp-pct{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:35px;text-align:right;}
+.layout{display:flex;width:100%;max-width:1400px;flex:1;padding:20px;gap:16px;align-items:flex-start;}
+.step-sidebar{width:200px;flex-shrink:0;position:sticky;top:92px;}
+.sidebar-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
+.step-node{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .2s;position:relative;margin-bottom:2px;}
+.step-node:hover{background:rgba(255,255,255,.05);}
+.step-node.active{background:rgba(192,132,252,.1);}
+.step-node.locked{opacity:.4;cursor:not-allowed;}
+.step-connector{position:absolute;left:21px;top:36px;width:2px;height:10px;background:var(--border);}
+.step-node.completed .step-connector{background:var(--success);}
+.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;margin-top:1px;transition:all .3s;}
+.step-node.completed .step-dot{background:var(--success);border-color:var(--success);color:#000;font-size:12px;}
+.step-node.active .step-dot{border-color:var(--accent);color:var(--accent);background:rgba(192,132,252,.1);}
+.step-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
+.step-node.locked .step-name{color:var(--muted);}
+.step-xp{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:2px;}
+.step-node.completed .step-xp{color:var(--success);}
+.centre-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
+.mission-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+.card-step-badge{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+.card-xp-badge{font-family:var(--mono);font-size:12px;color:var(--accent);background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);padding:2px 10px;border-radius:20px;}
+.card-body{padding:18px 20px;}
+.step-title{font-size:21px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.2;}
+.step-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.step-desc strong{color:var(--text);}
+.code-block{background:#020008;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;color:var(--accent2);line-height:1.8;margin-bottom:14px;overflow-x:auto;}
+.code-block .kw{color:#f472b6;}.code-block .fn{color:#a78bfa;}.code-block .str{color:#86efac;}.code-block .cm{color:#4a3a6a;font-style:italic;}.code-block .num{color:#fb923c;}
+.callout{border-left:3px solid var(--accent2);background:rgba(167,139,250,.06);border-radius:0 8px 8px 0;padding:11px 15px;font-size:14px;color:var(--text);line-height:1.6;margin-bottom:14px;}
+.callout.warn{border-color:var(--warn);background:rgba(251,146,60,.06);}
+.callout.success{border-color:var(--success);background:rgba(74,222,128,.06);}
+.challenge-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:4px;}
+.challenge-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.challenge-label::before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+.challenge-q{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.5;}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.opt-btn{background:var(--surface3);border:2px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;cursor:pointer;text-align:left;transition:all .2s;line-height:1.4;}
+.opt-btn:hover{border-color:var(--accent2);background:rgba(167,139,250,.06);}
+.opt-btn.correct{border-color:var(--success);background:rgba(74,222,128,.12);color:var(--success);}
+.opt-btn.wrong{border-color:var(--danger);background:rgba(248,113,113,.12);color:var(--danger);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.hint-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.hint-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+.hint-btn:hover{border-color:var(--warn);color:var(--warn);}
+.hint-text{display:none;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--warn);margin-top:8px;line-height:1.6;}
+.hint-text.visible{display:block;}
+.unlock-btn{width:100%;background:linear-gradient(135deg,var(--accent),#7c3aed);border:none;border-radius:12px;padding:13px 24px;color:#fff;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(192,132,252,.3);}
+.unlock-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(192,132,252,.4);}
+.unlock-btn.visible{display:flex;}
+.editor-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;}
+.editor-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.editor-title{font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.editor-title::before{content:'🗡️';font-size:14px;}
+.editor-wrap{position:relative;background:#020008;}
+.code-editor{width:100%;min-height:180px;resize:vertical;background:#020008;color:#e8e0ff;font-family:var(--mono);font-size:13px;line-height:1.8;border:none;outline:none;padding:14px 16px;tab-size:4;white-space:pre;display:block;}
+.code-editor:focus{background:#040010;}
+.input-row{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#020008;border-top:1px solid var(--border);}
+.input-label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+.stdin-input{flex:1;background:#0d0820;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2);font-family:var(--mono);font-size:13px;outline:none;}
+.stdin-input:focus{border-color:var(--accent2);}
+.stdin-hint{font-size:11px;color:var(--muted);font-style:italic;}
+.run-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);}
+.run-btn{display:flex;align-items:center;gap:6px;background:var(--success);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.run-btn:hover{background:#00ff88;transform:translateY(-1px);}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.check-code-btn{display:flex;align-items:center;gap:6px;background:var(--accent);border:none;border-radius:8px;padding:8px 18px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.check-code-btn:hover{filter:brightness(1.1);}
+.check-code-btn:disabled{opacity:.4;cursor:not-allowed;}
+.reset-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;margin-left:auto;}
+.reset-btn:hover{border-color:var(--danger);color:var(--danger);}
+.output-panel{background:#020008;border-top:1px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:13px;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;}
+.output-line{color:var(--accent2);}
+.output-error{color:var(--danger);}
+.output-placeholder{color:var(--muted);font-style:italic;}
+.code-result{margin:0 14px 12px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:none;}
+.code-result.pass{background:rgba(74,222,128,.12);border:1px solid var(--success);color:var(--success);display:block;}
+.code-result.fail{background:rgba(248,113,113,.1);border:1px solid var(--danger);color:var(--danger);display:block;}
+.goal-box{padding:10px 14px;background:rgba(167,139,250,.05);border-top:1px solid rgba(167,139,250,.15);font-size:12px;color:var(--muted);}
+.goal-box strong{color:var(--accent2);}
+.xp-pop{position:fixed;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);pointer-events:none;z-index:9999;animation:floatUp .9s ease forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(1.3);}}
+.badge-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:14px 24px;display:flex;align-items:center;gap:12px;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.badge-toast.show{transform:translateX(-50%) translateY(0);}
+.badge-icon{font-size:32px;}.badge-title{font-weight:700;color:var(--text);font-size:14px;}.badge-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#020008 0%,#0d0820 60%,#1a1035 100%);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-overlay.hidden{display:none;}
+.login-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:40px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(192,132,252,.15);}
+.login-logo{font-size:52px;margin-bottom:12px;}
+.login-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.login-subtitle{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.5;}
+.login-field{margin-bottom:16px;text-align:left;}
+.login-label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.login-input{width:100%;background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--sans);font-size:15px;outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-input::placeholder{color:var(--muted);}
+.login-btn{width:100%;margin-top:8px;background:linear-gradient(135deg,var(--accent),#7c3aed);border:none;border-radius:12px;padding:14px;color:#fff;font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;}
+.login-btn:hover{transform:translateY(-2px);}
+.login-error{color:var(--danger);font-size:13px;margin-top:8px;display:none;}
+.login-error.show{display:block;}
+.student-chip{display:flex;align-items:center;gap:6px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);border-radius:20px;padding:3px 10px 3px 6px;font-family:var(--mono);font-size:11px;color:var(--accent);}
+.student-chip-avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+/* FAILED */
+.failed-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:998;align-items:center;justify-content:center;}
+.failed-overlay.show{display:flex;}
+.failed-card{background:var(--surface);border:2px solid var(--danger);border-radius:24px;padding:36px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 0 80px rgba(248,113,113,.2);}
+.failed-emoji{font-size:60px;margin-bottom:14px;animation:wobble .6s ease;}
+@keyframes wobble{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+.failed-title{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--danger);margin-bottom:8px;}
+.failed-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:6px;}
+.failed-step{font-family:var(--mono);font-size:12px;color:var(--warn);background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:8px;padding:8px 14px;margin:14px 0 20px;}
+.failed-xp{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.failed-xp-label{color:var(--muted);font-size:12px;margin-bottom:24px;}
+.failed-btn-primary{width:100%;background:linear-gradient(135deg,var(--accent),#7c3aed);border:none;border-radius:12px;padding:14px;color:#fff;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+.failed-btn-primary:hover{transform:translateY(-2px);}
+.failed-btn-secondary{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.failed-btn-secondary:hover{border-color:var(--danger);color:var(--danger);}
+/* COMPLETE */
+.complete-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;}
+.complete-overlay.show{display:flex;}
+.complete-card{background:var(--surface);border:2px solid var(--accent);border-radius:24px;padding:36px 44px;text-align:center;max-width:480px;width:90%;box-shadow:0 0 80px rgba(192,132,252,.2);max-height:90vh;overflow-y:auto;}
+.complete-emoji{font-size:60px;margin-bottom:14px;}
+.complete-title{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px;}
+.complete-sub{color:var(--muted);font-size:14px;margin-bottom:20px;}
+.complete-xp{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.complete-xp-label{color:var(--muted);font-size:12px;margin-bottom:20px;}
+.complete-badges{display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.complete-badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.restart-btn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 28px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;margin-top:8px;}
+.restart-btn:hover{border-color:var(--accent);color:var(--accent);}
+.next-mission-btn{background:linear-gradient(135deg,var(--accent),#7c3aed);border:none;border-radius:14px;padding:16px 32px;color:#fff;font-weight:700;font-size:17px;cursor:pointer;transition:all .2s;width:100%;box-shadow:0 4px 24px rgba(192,132,252,.4);display:flex;align-items:center;justify-content:center;gap:10px;}
+.next-mission-btn:hover{transform:translateY(-2px);}
+.mission-map{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.mm-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);min-width:70px;position:relative;}
+.mm-item.done{border-color:var(--success);}.mm-item.current{border-color:var(--accent);}
+.mm-icon{font-size:22px;}.mm-label{font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono);}
+.mm-item.done .mm-label{color:var(--success);}.mm-item.current .mm-label{color:var(--accent);}
+.mm-check{position:absolute;top:-6px;right:-6px;background:var(--success);border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;}
+.complete-divider{width:100%;height:1px;background:var(--border);margin:18px 0;}
+.next-preview{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:18px;text-align:left;}
+.next-preview-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.next-preview-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.next-preview-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+.xp-bonus{display:inline-flex;align-items:center;gap:4px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);border-radius:20px;padding:2px 10px;font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:6px;}
+.pol-btn{width:100%;margin-top:10px;background:var(--surface2);border:2px solid var(--accent2);border-radius:12px;padding:13px;color:var(--accent2);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pol-btn:hover{background:rgba(167,139,250,.08);transform:translateY(-1px);}
+.filter-bar{position:fixed;top:56px;right:14px;display:flex;gap:5px;z-index:200;}
+.fbtn{padding:5px 10px;border-radius:13px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+body.nature-green{--bg:#f4f1e8;--surface:#1a1508;--surface2:#2a2510;--surface3:#3a3518;--border:#6a5520;--text:#f0ecd8;--muted:#a09060;--accent:#d4a820;--accent2:#4a9a4a;}
+body.superpower *{font-family:'OpenDyslexic','Comic Sans MS',cursive!important;letter-spacing:.06em;word-spacing:.18em;line-height:1.9!important;}
+@media(max-width:900px){.step-sidebar{display:none;}.layout{padding:12px;}.options-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">🗡️</div>
+    <div class="login-title">Adventure Game</div>
+    <div class="login-subtitle">Python Mission — enter your details to begin</div>
+    <div class="login-field">
+      <label class="login-label" for="login-name">Your Name</label>
+      <input class="login-input" id="login-name" type="text" placeholder="e.g. Alex Johnson" autocomplete="off" maxlength="60">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="login-class">Class Code</label>
+      <input class="login-input" id="login-class" type="text" placeholder="e.g. 9CS1" autocomplete="off" maxlength="20" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Please enter your name and class code.</div>
+    <button class="login-btn" onclick="doLogin()">▶ Start Mission</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="fbtn" onclick="setFilter('ng')">🌿</button>
+  <button class="fbtn" onclick="setFilter('sp')">⚡</button>
+</div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="mission-tag">Mission 3</span>
+    <span class="mission-title">Adventure Game — Python</span>
+  </div>
+  <div class="topbar-right">
+    <div class="student-chip" id="student-chip" style="display:none">
+      <div class="student-chip-avatar" id="student-avatar">?</div>
+      <span id="student-name-display"></span>
+    </div>
+    <div class="lives-display" id="lives-display">❤️❤️❤️</div>
+    <div class="xp-display">⚡ <span id="xp-count">0</span> <span style="color:var(--muted);font-size:11px">XP</span></div>
+  </div>
+</div>
+
+<div class="master-progress">
+  <span class="mp-label">Mission progress</span>
+  <div class="mp-bar"><div class="mp-fill" id="master-fill"></div></div>
+  <span class="mp-pct" id="master-pct">0%</span>
+</div>
+
+<div class="layout">
+  <div class="step-sidebar"><div class="sidebar-label">Steps</div><div id="step-nav"></div></div>
+  <div class="centre-panel" id="centre-panel"></div>
+</div>
+
+<div class="badge-toast" id="badge-toast">
+  <div class="badge-icon" id="badge-icon">🏅</div>
+  <div><div class="badge-title" id="badge-title">Badge!</div><div class="badge-sub" id="badge-sub"></div></div>
+</div>
+
+<div class="failed-overlay" id="failed-overlay">
+  <div class="failed-card">
+    <div class="failed-emoji">💀</div>
+    <div class="failed-title">Mission Failed</div>
+    <div class="failed-sub">You ran out of lives. Don't worry — you can skip ahead or go back and try again.</div>
+    <div class="failed-step" id="failed-step-info"></div>
+    <div class="failed-xp" id="failed-xp">0</div>
+    <div class="failed-xp-label">XP earned so far</div>
+    <button class="failed-btn-primary" id="failed-next-btn" onclick="failedGoNext()">
+      <span id="failed-next-icon">🚀</span>
+      <span id="failed-next-label">Continue to Next Mission</span>
+      <span>→</span>
+    </button>
+    <button class="failed-btn-secondary" onclick="restartMission()">↺ Start This Mission Again</button>
+  </div>
+</div>
+
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-card">
+    <div class="complete-emoji">🎉</div>
+    <div class="complete-title">Mission Complete!</div>
+    <div class="complete-sub">You built a working Python text adventure game from scratch.</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
+      <div><div class="complete-xp" id="final-xp">0</div><div class="complete-xp-label">XP earned</div></div>
+    </div>
+    <div class="complete-badges" id="final-badges"></div>
+    <div class="complete-divider"></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Mission Progress</div>
+    <div class="mission-map" id="mission-map-display"></div>
+    <div class="next-preview" id="next-preview" style="display:none">
+      <div class="next-preview-label">⚡ Next Mission</div>
+      <div class="next-preview-title" id="next-mission-title"></div>
+      <div class="next-preview-desc" id="next-mission-desc"></div>
+      <div class="xp-bonus" id="next-xp-bonus"></div>
+    </div>
+    <button class="next-mission-btn" id="next-mission-btn" onclick="goNextMission()">
+      <span id="next-btn-icon">🚀</span><span id="next-btn-label">Start Next Mission</span><span>→</span>
+    </button>
+    <div class="complete-divider"></div>
+    <button class="pol-btn" onclick="downloadProofOfLearning()">📄 Download Proof of Learning</button>
+    <button class="restart-btn" onclick="restartMission()">🔄 Replay this mission</button>
+  </div>
+</div>
+
+<script>
+const MISSION = {
+  title: 'Adventure Game',
+  subtitle: 'Python Mission 3 of 4',
+  nextMission: {
+    title: 'Chatbot',
+    description: 'Use variables, input, if/else and loops to build a Python chatbot that can hold a conversation.',
+    file: 'task-chatbot.html',
+    badge: '🤖',
+    xpReward: 250
+  },
+  missionMap: [
+    { id:1, title:'Grade Calc',   done:true,  badge:'🐍', file:'task-engine-2-1.html' },
+    { id:2, title:'Shopping',     done:true,  badge:'🛒', file:'task-shopping-cart.html' },
+    { id:3, title:'Adventure',    done:false, badge:'🗡️', file:'task-adventure-game.html' },
+    { id:4, title:'Chatbot',      done:false, badge:'🤖', file:'task-chatbot.html' },
+  ],
+  steps: [
+    // ── STEP 0 ────────────────────────────────────────────────
+    {
+      id:0, title:'Welcome to the Dungeon', xp:10, badge:null,
+      content:`<p class="step-desc">You are going to build a <strong>text adventure game</strong> in Python. The player will explore rooms, pick up weapons, fight a dragon, and see a win or lose ending — all using Python you already know.</p>
+<div class="callout">🗺️ <strong>What you'll build:</strong><br>
+A game where the player types choices, moves between rooms, collects items, and fights a final boss — using variables, input(), if/else, lists, loops and functions.</div>
+<div class="code-block"><span class="cm"># Sample run:</span>
+You wake up in a dark dungeon.
+What do you do? (look / move): look
+You see a rusty sword on the floor.
+What do you do? (look / move): move
+You enter a torch-lit corridor...</div>
+<p class="step-desc">We'll build each piece step by step — starting with the very simplest Python first.</p>`,
+      challenge:{
+        type:'mcq',
+        q:'In Python, which function lets you ask the player to type something and stores what they type?',
+        options:['print()','ask()','input()','read()'],
+        correct:2,
+        hint:'You have used this in previous missions. It shows a prompt, waits for the player to type, and returns what they typed as a string.',
+        hintCost:5
+      },
+      starterCode:`# Run this to see your adventure begin!
+print("=== THE DUNGEON ADVENTURE ===")
+print("You wake up in a dark dungeon.")
+print("A single torch flickers on the wall.")
+print("Your adventure begins...")`,
+      goal:'Run the starter code. Answer the quiz to unlock Step 2.',
+      goalCheck: null
+    },
+
+    // ── STEP 1 ────────────────────────────────────────────────
+    {
+      id:1, title:'Getting the Player\'s Name', xp:15, badge:null,
+      content:`<p class="step-desc"><strong>input()</strong> lets the player type something. Whatever they type is stored as a string in a variable. You can then use it in f-strings to personalise the game.</p>
+<div class="code-block">name = <span class="fn">input</span>(<span class="str">"What is your name, adventurer? "</span>)
+<span class="fn">print</span>(<span class="str">f"Welcome, {name}! Your quest begins..."</span>)</div>
+<div class="callout">📝 The text inside <code>input()</code> is the <strong>prompt</strong> — it shows on screen before the player types. The variable stores whatever they type.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What data type does <code>input()</code> always return?',
+        options:['int','float','str','bool'],
+        correct:2,
+        hint:'Even if the player types a number like 42, input() gives you the text "42", not the number 42. You need int() to convert it.',
+        hintCost:5
+      },
+      starterCode:`# Ask for the player's name and greet them
+name = input("What is your name, adventurer? ")
+print(f"Welcome, {name}! Your quest begins.")
+print(f"You are the chosen hero, {name}.")
+print("Good luck...")`,
+      goal:'Use input() to get the player\'s name. Use it at least twice in f-strings.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('input(')) return {pass:false,msg:'❌ Use input() to ask for the player\'s name.'};
+        if(!code.includes('f"')&&!code.includes("f'")) return {pass:false,msg:'❌ Use an f-string to include the name in your output.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const nameUsed=(code.match(/\{name\}/g)||[]).length;
+        if(nameUsed<2) return {pass:false,msg:'❌ Use {name} inside f-strings at least twice to personalise the messages.'};
+        return {pass:true,msg:'✅ Player name stored and used in f-strings — personalisation unlocked!'};
+      }
+    },
+
+    // ── STEP 2 ────────────────────────────────────────────────
+    {
+      id:2, title:'Player Stats with Variables', xp:20, badge:null,
+      content:`<p class="step-desc">Every adventure game has <strong>player stats</strong> — health, attack, items. In Python these are just variables. We can print them and update them as the game progresses.</p>
+<div class="code-block">name = <span class="str">"Hero"</span>
+health = <span class="num">100</span>
+attack = <span class="num">10</span>
+gold = <span class="num">0</span>
+has_sword = <span class="kw">False</span>
+
+<span class="fn">print</span>(<span class="str">f"=== {name}'s Stats ==="</span>)
+<span class="fn">print</span>(<span class="str">f"Health : {health}"</span>)
+<span class="fn">print</span>(<span class="str">f"Attack : {attack}"</span>)
+<span class="fn">print</span>(<span class="str">f"Gold   : {gold}"</span>)
+<span class="fn">print</span>(<span class="str">f"Sword  : {has_sword}"</span>)</div>
+<div class="callout">⚔️ <strong>Boolean variables</strong> like <code>has_sword = False</code> are perfect for tracking yes/no states in a game. They become <code>True</code> when the player picks up the item.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'A player picks up a sword. Which line of code correctly updates the boolean variable?',
+        options:['has_sword == True','has_sword = "True"','has_sword = True','has_sword = 1'],
+        correct:2,
+        hint:'= is assignment (sets the value). == is comparison (checks if equal). True with a capital T is the Python boolean, not the string "True".',
+        hintCost:5
+      },
+      starterCode:`name = "Hero"
+health = 100
+attack = 10
+gold = 0
+has_sword = False
+
+# Print a stats panel showing all variables
+print(f"=== {name}'s Stats ===")
+print(f"Health : {health}")
+print(f"Attack : {attack}")
+print(f"Gold   : {gold}")
+print(f"Sword  : {has_sword}")`,
+      goal:'Create at least 4 player stat variables. Print them all in a formatted stats panel.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('health')&&!code.includes('hp')) return {pass:false,msg:'❌ Create a health variable for the player.'};
+        if(!code.includes('attack')&&!code.includes('damage')) return {pass:false,msg:'❌ Create an attack variable.'};
+        if(!code.includes('False')&&!code.includes('True')) return {pass:false,msg:'❌ Include a boolean variable (e.g. has_sword = False).'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const lines=output.trim().split('\n');
+        if(lines.length<4) return {pass:false,msg:'❌ Print at least 4 lines showing different stats.'};
+        return {pass:true,msg:'✅ Player stats set up — health, attack, gold and a boolean item flag all ready!'};
+      }
+    },
+
+    // ── STEP 3 ────────────────────────────────────────────────
+    {
+      id:3, title:'Making Choices with if/else', xp:25, badge:{icon:'🔀',name:'Decision Maker',desc:'Used if/else to branch the story'},
+      content:`<p class="step-desc">Games are driven by choices. Python's <strong>if/else</strong> lets you run different code depending on what the player types.</p>
+<div class="code-block">choice = <span class="fn">input</span>(<span class="str">"Go left or right? "</span>)
+
+<span class="kw">if</span> choice == <span class="str">"left"</span>:
+    <span class="fn">print</span>(<span class="str">"You find a chest of gold!"</span>)
+<span class="kw">elif</span> choice == <span class="str">"right"</span>:
+    <span class="fn">print</span>(<span class="str">"You fall into a pit. Ouch!"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"That's not a valid choice."</span>)</div>
+<div class="callout warn">⚠️ String comparison is <strong>case-sensitive</strong>. <code>"Left"</code> ≠ <code>"left"</code>. Use <code>choice.lower()</code> to handle both.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'The player types "Left" but the code checks <code>if choice == "left"</code>. What happens?',
+        options:['The if branch runs','The else branch runs','Python crashes','Both branches run'],
+        correct:1,
+        hint:'"Left" and "left" are different strings. The condition is False, so Python skips to elif/else. Use choice.lower() == "left" to handle any capitalisation.',
+        hintCost:5
+      },
+      starterCode:`choice = input("You stand at a fork. Go left or right? ")
+
+if choice.lower() == "left":
+    print("You enter a mossy cave. It smells ancient.")
+elif choice.lower() == "right":
+    print("You cross a rickety bridge over a ravine.")
+else:
+    print("You hesitate, unsure which way to go.")`,
+      goal:'Use input() and if/elif/else to branch the story based on the player\'s choice. Use .lower() to handle capitals.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('input(')) return {pass:false,msg:'❌ Use input() to get the player\'s choice.'};
+        if(!code.includes('if ')&&!code.includes('elif')) return {pass:false,msg:'❌ Use if/elif/else to branch on the player\'s answer.'};
+        if(!code.includes('elif')&&!code.includes('else')) return {pass:false,msg:'❌ Add an elif or else for other choices.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const tests=[
+          runPyLite(code,'left'),
+          runPyLite(code,'right'),
+          runPyLite(code,'jump')
+        ];
+        if(tests[0].output.join('')===tests[1].output.join('')) return {pass:false,msg:'❌ Left and right should produce different outputs — check your if/elif conditions.'};
+        return {pass:true,msg:'✅ Branching story working — different choices lead to different outcomes!'};
+      }
+    },
+
+    // ── STEP 4 ────────────────────────────────────────────────
+    {
+      id:4, title:'Rooms as a List', xp:25, badge:null,
+      content:`<p class="step-desc">A game world is a collection of rooms. In Python we can store room descriptions in a <strong>list</strong> and use an index variable to track where the player is.</p>
+<div class="code-block">rooms = [
+    <span class="str">"A dark dungeon cell"</span>,
+    <span class="str">"A torch-lit corridor"</span>,
+    <span class="str">"A treasure room"</span>,
+    <span class="str">"The Dragon's lair"</span>
+]
+
+current_room = <span class="num">0</span>
+<span class="fn">print</span>(<span class="str">f"You are in: {rooms[current_room]}"</span>)
+
+<span class="cm"># Move to the next room</span>
+current_room += <span class="num">1</span>
+<span class="fn">print</span>(<span class="str">f"You move to: {rooms[current_room]}"</span>)</div>
+<div class="callout">🗺️ <code>current_room</code> is the player's position. Increasing it by 1 moves them forward. You can check <code>current_room == len(rooms) - 1</code> to know they've reached the final room.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'A rooms list has 4 items. What is the index of the last room?',
+        options:['4','3','0','len(rooms)'],
+        correct:1,
+        hint:'Lists are zero-indexed: first item = 0, second = 1, third = 2, fourth = 3. The last index is always len(list) - 1.',
+        hintCost:5
+      },
+      starterCode:`rooms = [
+    "A dark dungeon cell",
+    "A torch-lit corridor",
+    "A treasure room",
+    "The Dragon's lair"
+]
+
+current_room = 0
+
+# Print current room, move forward, print next room
+print(f"You are in: {rooms[current_room]}")
+current_room += 1
+print(f"You move to: {rooms[current_room]}")
+current_room += 1
+print(f"You move to: {rooms[current_room]}")
+print(f"Total rooms: {len(rooms)}")`,
+      goal:'Create a rooms list with at least 4 rooms. Use an index variable to move through them. Print each room name.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('rooms')&&!code.includes('room')) return {pass:false,msg:'❌ Create a list called rooms containing room descriptions.'};
+        if(!code.includes('[')) return {pass:false,msg:'❌ Define rooms as a list using square brackets [ ].'};
+        if(!code.includes('current_room')&&!code.includes('room_index')&&!code.includes('position')) return {pass:false,msg:'❌ Create an index variable like current_room = 0 to track the player position.'};
+        if(!code.includes('len(')) return {pass:false,msg:'❌ Use len(rooms) to show the total number of rooms.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const outLines=output.trim().split('\n');
+        if(outLines.length<3) return {pass:false,msg:'❌ Print at least 3 room transitions.'};
+        return {pass:true,msg:'✅ Room navigation working — the player can move through your dungeon!'};
+      }
+    },
+
+    // ── STEP 5 ────────────────────────────────────────────────
+    {
+      id:5, title:'A Loop for Exploration', xp:30, badge:{icon:'🔁',name:'Explorer',desc:'Used a while loop to keep the game running'},
+      content:`<p class="step-desc">Real games keep running until something happens. A <strong>while loop</strong> repeats the game loop — asking for input and responding — until the player wins, loses, or quits.</p>
+<div class="code-block">playing = <span class="kw">True</span>
+current_room = <span class="num">0</span>
+
+<span class="kw">while</span> playing:
+    <span class="fn">print</span>(<span class="str">f"\\nYou are in room {current_room + 1}."</span>)
+    action = <span class="fn">input</span>(<span class="str">"Move forward (f) or quit (q)? "</span>)
+
+    <span class="kw">if</span> action.lower() == <span class="str">"q"</span>:
+        playing = <span class="kw">False</span>
+        <span class="fn">print</span>(<span class="str">"You flee the dungeon. Goodbye!"</span>)
+    <span class="kw">elif</span> action.lower() == <span class="str">"f"</span>:
+        current_room += <span class="num">1</span>
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">"Unknown command."</span>)</div>
+<div class="callout warn">⚠️ Always make sure the loop can end — either by setting <code>playing = False</code> or using <code>break</code>. A loop with no exit will freeze the program forever.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'What is the purpose of the <code>playing = True</code> variable in the game loop?',
+        options:[
+          'It stores the player\'s score',
+          'It controls whether the while loop keeps running',
+          'It must always be True or Python crashes',
+          'It sets the difficulty level'
+        ],
+        correct:1,
+        hint:'while playing: keeps looping as long as playing is True. Setting playing = False ends the loop on the next check.',
+        hintCost:5
+      },
+      starterCode:`rooms = ["Dungeon cell", "Corridor", "Treasure room", "Dragon's lair"]
+current_room = 0
+playing = True
+
+while playing:
+    print(f"\\nYou are in: {rooms[current_room]}")
+    action = input("Move forward (f) or quit (q)? ")
+
+    if action.lower() == "q":
+        playing = False
+        print("You flee the dungeon. Goodbye!")
+    elif action.lower() == "f":
+        current_room += 1
+        if current_room >= len(rooms):
+            print("You have explored the whole dungeon!")
+            playing = False
+    else:
+        print("Unknown command. Try f or q.")`,
+      goal:'Write a while loop that keeps the game running. The player can move forward or quit. Stop the loop when they reach the end or quit.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('while')) return {pass:false,msg:'❌ Use a while loop to keep the game running.'};
+        if(!code.includes('playing')&&!code.includes('running')&&!code.includes('game_over')) return {pass:false,msg:'❌ Use a boolean variable like playing = True to control the loop.'};
+        if(!code.includes('False')&&!code.includes('break')) return {pass:false,msg:'❌ Make sure the loop can end — set playing = False or use break.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        return {pass:true,msg:'✅ Game loop working — the adventure keeps running until the player decides to stop!'};
+      }
+    },
+
+    // ── STEP 6 ────────────────────────────────────────────────
+    {
+      id:6, title:'Picking Up Items', xp:25, badge:null,
+      content:`<p class="step-desc">Give the player something to find. When they enter a certain room, they can pick up a weapon. We track this with a <strong>boolean variable</strong> and an <strong>if statement</strong> inside the game loop.</p>
+<div class="code-block">has_sword = <span class="kw">False</span>
+
+<span class="cm"># Inside the game loop, when entering room index 1:</span>
+<span class="kw">if</span> current_room == <span class="num">1</span> <span class="kw">and not</span> has_sword:
+    pick = <span class="fn">input</span>(<span class="str">"You see a sword. Pick it up? (y/n) "</span>)
+    <span class="kw">if</span> pick.lower() == <span class="str">"y"</span>:
+        has_sword = <span class="kw">True</span>
+        <span class="fn">print</span>(<span class="str">"You pick up the sword. Attack +15!"</span>)
+        attack += <span class="num">15</span></div>
+<div class="callout">🗡️ <code>not has_sword</code> means "if the player doesn't already have the sword" — without this, the game would ask every time they are in that room.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'Why do we check <code>not has_sword</code> as well as the room number?',
+        options:[
+          'To make the code run faster',
+          'To prevent the player being offered the sword again after already picking it up',
+          'Because has_sword must be False to enter that room',
+          'Python requires both conditions in an if statement'
+        ],
+        correct:1,
+        hint:'Without "not has_sword", the game would ask "Pick it up?" every time the player visits that room, even after they already have it.',
+        hintCost:5
+      },
+      starterCode:`health = 100
+attack = 10
+has_sword = False
+current_room = 0
+rooms = ["Dungeon cell", "Armoury", "Corridor", "Dragon's lair"]
+
+print(f"You enter: {rooms[current_room]}")
+current_room = 1
+print(f"\\nYou enter: {rooms[current_room]}")
+
+if current_room == 1 and not has_sword:
+    pick = input("You see a sword on a rack. Pick it up? (y/n) ")
+    if pick.lower() == "y":
+        has_sword = True
+        attack += 15
+        print(f"You grab the sword! Attack is now {attack}.")
+    else:
+        print("You leave the sword behind.")
+
+print(f"\\nStats — Health: {health}, Attack: {attack}, Sword: {has_sword}")`,
+      goal:'Use a boolean variable to track whether the player has picked up an item. Only offer it once using "not has_sword".',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('has_sword')&&!code.includes('has_weapon')&&!code.includes('has_item')) return {pass:false,msg:'❌ Create a boolean variable like has_sword = False to track the item.'};
+        if(!code.includes('not ')) return {pass:false,msg:'❌ Use "not has_sword" in your condition to only offer the item once.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const withY=runPyLite(code,'y');
+        const withN=runPyLite(code,'n');
+        if(withY.output.join('')===withN.output.join('')) return {pass:false,msg:'❌ Picking up (y) and declining (n) should produce different outputs.'};
+        return {pass:true,msg:'✅ Item pickup logic working — the sword can only be collected once!'};
+      }
+    },
+
+    // ── STEP 7 ────────────────────────────────────────────────
+    {
+      id:7, title:'A Combat Function', xp:30, badge:{icon:'⚔️',name:'Battle Ready',desc:'Wrote a fight() function for game combat'},
+      content:`<p class="step-desc">The dragon fight is the game's climax. Put the combat logic inside a <strong>function</strong> — it keeps the code organised and easy to call at the right moment.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">fight</span>(player_attack, has_sword):
+    dragon_health = <span class="num">50</span>
+    bonus = <span class="num">20</span> <span class="kw">if</span> has_sword <span class="kw">else</span> <span class="num">0</span>
+    damage = player_attack + bonus
+    dragon_health -= damage
+    <span class="fn">print</span>(<span class="str">f"You deal {damage} damage!"</span>)
+    <span class="kw">if</span> dragon_health <= <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">"The dragon is defeated!"</span>)
+        <span class="kw">return</span> <span class="kw">True</span>
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">f"Dragon has {dragon_health} health left."</span>)
+        <span class="kw">return</span> <span class="kw">False</span>
+
+won = <span class="fn">fight</span>(<span class="num">10</span>, <span class="kw">True</span>)
+<span class="fn">print</span>(<span class="str">f"Victory: {won}"</span>)</div>`,
+      challenge:{
+        type:'mcq',
+        q:'In <code>bonus = 20 if has_sword else 0</code>, what is the value of bonus when has_sword is False?',
+        options:['20','True','0','False'],
+        correct:2,
+        hint:'This is a ternary expression: value_if_true if condition else value_if_false. When has_sword is False, Python takes the else branch and returns 0.',
+        hintCost:5
+      },
+      starterCode:`def fight(player_attack, has_sword):
+    dragon_health = 50
+    bonus = 20 if has_sword else 0
+    damage = player_attack + bonus
+    dragon_health -= damage
+    print(f"You strike the dragon for {damage} damage!")
+    if dragon_health <= 0:
+        print("The dragon collapses — you win!")
+        return True
+    else:
+        print(f"The dragon roars! It has {dragon_health} health left.")
+        return False
+
+# Test without sword
+print("--- Without sword ---")
+result = fight(10, False)
+print(f"Won: {result}")
+
+# Test with sword
+print("--- With sword ---")
+result = fight(10, True)
+print(f"Won: {result}")`,
+      goal:'Write a fight() function that takes player_attack and has_sword. Return True if the dragon is defeated, False if not. Test both cases.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('def fight')) return {pass:false,msg:'❌ Define a function called fight().'};
+        if(!code.includes('return True')&&!code.includes('return true')) return {pass:false,msg:'❌ Return True when the dragon is defeated.'};
+        if(!code.includes('return False')&&!code.includes('return false')) return {pass:false,msg:'❌ Return False when the dragon survives.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const noSwordR=runPyLite(code,'');
+        const out=noSwordR.output.join('\n').toLowerCase();
+        if(!out.includes('true')&&!out.includes('false')&&!out.includes('won')) return {pass:false,msg:'❌ Call fight() and print the result. Make sure both test cases run.'};
+        return {pass:true,msg:'✅ Combat function ready — the dragon can be beaten with or without a sword!'};
+      }
+    },
+
+    // ── STEP 8 ────────────────────────────────────────────────
+    {
+      id:8, title:'Win and Lose Endings', xp:25, badge:null,
+      content:`<p class="step-desc">Every good game has different endings. Use the <strong>return value</strong> from <code>fight()</code> to decide which ending the player gets.</p>
+<div class="code-block">won = <span class="fn">fight</span>(player_attack, has_sword)
+
+<span class="kw">if</span> won:
+    <span class="fn">print</span>(<span class="str">"\\n🏆 VICTORY!"</span>)
+    <span class="fn">print</span>(<span class="str">"You slay the dragon and claim the treasure."</span>)
+    <span class="fn">print</span>(<span class="str">"Your legend will be told for generations."</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"\\n💀 DEFEAT!"</span>)
+    <span class="fn">print</span>(<span class="str">"The dragon's fire consumes you..."</span>)
+    <span class="fn">print</span>(<span class="str">"Better luck next time, adventurer."</span>)</div>
+<div class="callout success">✅ <code>if won:</code> is shorthand for <code>if won == True:</code> — Python treats True values directly in if conditions.</div>`,
+      challenge:{
+        type:'mcq',
+        q:'<code>if won:</code> is equivalent to which of the following?',
+        options:['if won = True:','if won == True:','if won is 1:','if won != False:'],
+        correct:1,
+        hint:'"if won:" checks whether won is truthy. "if won == True:" does the same thing explicitly. Both are correct; "if won:" is just the Pythonic shorthand.',
+        hintCost:5
+      },
+      starterCode:`def fight(player_attack, has_sword):
+    dragon_health = 50
+    bonus = 20 if has_sword else 0
+    damage = player_attack + bonus
+    dragon_health -= damage
+    if dragon_health <= 0:
+        return True
+    else:
+        return False
+
+player_attack = 10
+has_sword = True
+
+won = fight(player_attack, has_sword)
+
+if won:
+    print("\\n*** VICTORY! ***")
+    print("You slay the dragon and claim the treasure.")
+    print("Your legend will be told for generations.")
+else:
+    print("\\n*** DEFEAT! ***")
+    print("The dragon's fire consumes you...")`,
+      goal:'Use the return value of fight() in an if/else to print a victory or defeat ending.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('def fight')) return {pass:false,msg:'❌ Keep the fight() function in your code.'};
+        if(!code.includes('if won')&&!code.includes('if result')&&!code.includes('if victory')) return {pass:false,msg:'❌ Use if/else on the return value of fight() to branch to the correct ending.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const outLower=output.toLowerCase();
+        const hasEnding=outLower.includes('victory')||outLower.includes('defeat')||outLower.includes('win')||outLower.includes('lose');
+        if(!hasEnding) return {pass:false,msg:'❌ Print a clear victory or defeat message based on the fight result.'};
+        return {pass:true,msg:'✅ Endings written — your game now has a proper win state and a lose state!'};
+      }
+    },
+
+    // ── STEP 9 ────────────────────────────────────────────────
+    {
+      id:9, title:'The Complete Adventure', xp:40, badge:{icon:'🗡️',name:'Game Dev',desc:'Built a complete Python text adventure game!'},
+      content:`<p class="step-desc">Time to assemble the <strong>full game</strong>: player setup, room navigation loop, item pickup, combat, and endings — all working together.</p>
+<div class="code-block"><span class="kw">def</span> <span class="fn">fight</span>(attack, sword):
+    hp = <span class="num">50</span> - attack - (<span class="num">20</span> <span class="kw">if</span> sword <span class="kw">else</span> <span class="num">0</span>)
+    <span class="kw">return</span> hp <= <span class="num">0</span>
+
+rooms = [<span class="str">"Cell"</span>, <span class="str">"Armoury"</span>, <span class="str">"Corridor"</span>, <span class="str">"Dragon's Lair"</span>]
+name = <span class="fn">input</span>(<span class="str">"Name? "</span>)
+health, attack, has_sword = <span class="num">100</span>, <span class="num">10</span>, <span class="kw">False</span>
+room = <span class="num">0</span>; playing = <span class="kw">True</span>
+
+<span class="kw">while</span> playing:
+    <span class="fn">print</span>(<span class="str">f"\\n[{rooms[room]}]"</span>)
+    <span class="kw">if</span> room == <span class="num">1</span> <span class="kw">and not</span> has_sword:
+        <span class="kw">if</span> <span class="fn">input</span>(<span class="str">"Take sword? y/n "</span>).lower() == <span class="str">"y"</span>:
+            has_sword = <span class="kw">True</span>; attack += <span class="num">15</span>
+    <span class="kw">if</span> room == <span class="fn">len</span>(rooms) - <span class="num">1</span>:
+        won = <span class="fn">fight</span>(attack, has_sword)
+        <span class="fn">print</span>(<span class="str">"VICTORY!"</span> <span class="kw">if</span> won <span class="kw">else</span> <span class="str">"DEFEAT!"</span>)
+        playing = <span class="kw">False</span>
+    <span class="kw">else</span>:
+        <span class="kw">if</span> <span class="fn">input</span>(<span class="str">"Move? y/n "</span>).lower() == <span class="str">"y"</span>: room += <span class="num">1</span></div>`,
+      challenge:{
+        type:'mcq',
+        q:'In a complete program, why should the <code>def fight()</code> function be written before the main game loop?',
+        options:[
+          'Functions must always be at the top of Python files',
+          'Python reads top-to-bottom — the function must be defined before it is called',
+          'It makes no difference where the function is placed',
+          'The while loop cannot contain function calls'
+        ],
+        correct:1,
+        hint:'Python executes line by line. If fight() is called inside the while loop but defined after it, Python raises a NameError because it hasn\'t seen the def yet.',
+        hintCost:5
+      },
+      starterCode:`def fight(attack, has_sword):
+    dragon_hp = 50
+    bonus = 20 if has_sword else 0
+    damage = attack + bonus
+    dragon_hp -= damage
+    print(f"You deal {damage} damage to the dragon!")
+    return dragon_hp <= 0
+
+rooms = ["Dungeon Cell", "Armoury", "Stone Corridor", "Dragon's Lair"]
+name = input("Enter your hero's name: ")
+health = 100
+attack = 10
+has_sword = False
+current_room = 0
+playing = True
+
+print(f"\\nWelcome, {name}! Your adventure begins...")
+
+while playing:
+    print(f"\\n=== {rooms[current_room]} ===")
+
+    if current_room == 1 and not has_sword:
+        pick = input("You see a gleaming sword. Take it? (y/n) ")
+        if pick.lower() == "y":
+            has_sword = True
+            attack += 15
+            print(f"You take the sword! Attack: {attack}")
+
+    if current_room == len(rooms) - 1:
+        print("The dragon rears up before you!")
+        won = fight(attack, has_sword)
+        if won:
+            print(f"\\n*** VICTORY, {name}! ***")
+            print("The dragon falls. The treasure is yours!")
+        else:
+            print(f"\\n*** DEFEAT, {name}... ***")
+            print("The dragon's flames consume you.")
+        playing = False
+    else:
+        move = input("Move forward? (y/n) ")
+        if move.lower() == "y":
+            current_room += 1
+        else:
+            print("You stay put.")`,
+      goal:'Assemble the full game: name input, room loop, sword pickup, fight() function, win/lose endings.',
+      goalCheck:(code,output,inputVal)=>{
+        if(!code.includes('def fight')) return {pass:false,msg:'❌ Include the fight() function.'};
+        if(!code.includes('while')) return {pass:false,msg:'❌ Use a while loop for the main game loop.'};
+        if(!code.includes('has_sword')&&!code.includes('sword')) return {pass:false,msg:'❌ Include sword pickup logic using a boolean variable.'};
+        if(!code.includes('rooms')&&!code.includes('room')) return {pass:false,msg:'❌ Include a rooms list and use a room index variable.'};
+        if(output.includes('Error')) return {pass:false,msg:'❌ There is an error — check the output panel.'};
+        const outLower=output.toLowerCase();
+        if(!outLower.includes('victory')&&!outLower.includes('defeat')&&!outLower.includes('win')&&!outLower.includes('lose')) return {pass:false,msg:'❌ The game must end with a win or lose message.'};
+        return {pass:true,msg:'✅ Full adventure game complete — rooms, items, combat, and two endings all working!'};
+      }
+    }
+  ]
+};
+
+// ── GAME STATE ──────────────────────────────────────────────
+let GS={xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};
+let editors={};
+let STUDENT={name:'',classCode:''};
+
+// ── PYLITE (shared engine) ──────────────────────────────────
+function runPyLite(code,inputVal){
+  const inputLines=String(inputVal).split('\n');let inputIdx=0;
+  const output=[];let error=null;const vars={};const funcs={};
+  function pyInput(prompt){if(prompt!==undefined&&prompt!=='')output.push(String(prompt));const v=inputLines[inputIdx]!==undefined?inputLines[inputIdx].trim():'';inputIdx++;output.push(v);return v;}
+  function getIndent(line){return line.match(/^( *)/)[1].length;}
+  function stripComment(line){let inStr=false,sc='';for(let j=0;j<line.length;j++){const c=line[j];if(!inStr&&(c==='"'||c==="'"))  {inStr=true;sc=c;}else if(inStr&&c===sc)inStr=false;else if(!inStr&&c==='#')return line.slice(0,j);}return line;}
+  function splitCommaArgs(s){const parts=[];let cur='',depth=0,inStr=false,sc='';for(let i=0;i<s.length;i++){const c=s[i];if(inStr){cur+=c;if(c===sc)inStr=false;continue;}if(c==='"'||c==="'"){inStr=true;sc=c;cur+=c;continue;}if(c==='('||c==='['){depth++;cur+=c;continue;}if(c===')'||c===']'){depth--;cur+=c;continue;}if(c===','&&depth===0){parts.push(cur.trim());cur='';continue;}cur+=c;}if(cur.trim())parts.push(cur.trim());return parts;}
+  function evalExpr(expr){
+    expr=expr.trim();if(!expr)return'';
+    if(expr.startsWith('f"')||expr.startsWith("f'")){const inner=expr.slice(2,-1);return inner.replace(/\{([^}]+)\}/g,(_,e)=>{const fmtM=e.match(/^(.+):\.(\d+)f$/);if(fmtM){const v=evalExpr(fmtM[1].trim());return Number(v).toFixed(parseInt(fmtM[2]));}return String(evalExpr(e.trim()));});}
+    if((expr.startsWith('"')&&expr.endsWith('"'))||(expr.startsWith("'")&&expr.endsWith("'"))){return expr.slice(1,-1).replace(/\\n/g,'\n').replace(/\\t/g,'\t').replace(/\\\\/g,'\\');}
+    if(expr.startsWith('[')&&expr.endsWith(']')){const inner=expr.slice(1,-1).trim();if(!inner)return[];return splitCommaArgs(inner).map(e=>evalExpr(e));}
+    if(expr==='True')return true;if(expr==='False')return false;if(expr==='None')return null;
+    if(/^-?\d+$/.test(expr))return parseInt(expr,10);
+    if(/^-?\d+\.\d+$/.test(expr))return parseFloat(expr);
+    const ternM=expr.match(/^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$/);if(ternM)return evalExpr(ternM[2])?evalExpr(ternM[1]):evalExpr(ternM[3]);
+    const idxM=expr.match(/^([a-zA-Z_]\w*)\[(.+)\]$/);if(idxM){const lst=evalExpr(idxM[1]);const i=evalExpr(idxM[2]);if(!Array.isArray(lst))throw`TypeError`;const idx=i<0?lst.length+i:i;if(idx<0||idx>=lst.length)throw`IndexError: list index out of range`;return lst[idx];}
+    const methodM=expr.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);
+    if(methodM){const obj=evalExpr(methodM[1]);const method=methodM[2];const args=methodM[3].trim()?splitCommaArgs(methodM[3]).map(a=>evalExpr(a)):[];
+      if(typeof obj==='string'){if(method==='upper')return obj.toUpperCase();if(method==='lower')return obj.toLowerCase();if(method==='strip')return obj.trim();if(method==='replace')return obj.replaceAll(String(args[0]),String(args[1]));if(method==='split')return args.length?obj.split(String(args[0])):obj.trim().split(/\s+/);if(method==='startswith')return obj.startsWith(String(args[0]));if(method==='endswith')return obj.endsWith(String(args[0]));}
+      if(Array.isArray(obj)){if(method==='append'){obj.push(args[0]);return null;}if(method==='pop')return args.length?obj.splice(args[0],1)[0]:obj.pop();if(method==='remove'){const i=obj.indexOf(args[0]);if(i>-1)obj.splice(i,1);return null;}if(method==='sort'){obj.sort((a,b)=>a-b);return null;}if(method==='reverse'){obj.reverse();return null;}if(method==='count')return obj.filter(x=>x===args[0]).length;if(method==='index'){const i=obj.indexOf(args[0]);if(i===-1)throw'ValueError';return i;}}
+      throw`AttributeError: no method '${method}'`;}
+    const call=expr.match(/^([a-zA-Z_]\w*)\((.*)\)$/s);
+    if(call){const fname=call[1];const argsStr=call[2].trim();const args=argsStr?splitCommaArgs(argsStr).map(a=>evalExpr(a)):[];
+      if(fname==='print'){evalPrint(argsStr);return null;}
+      if(fname==='input')return pyInput(argsStr?evalExpr(argsStr):'');
+      if(fname==='int'){const v=args[0];const n=parseInt(v,10);if(isNaN(n))throw`ValueError`;return n;}
+      if(fname==='float'){const v=args[0];const n=parseFloat(v);if(isNaN(n))throw`ValueError`;return n;}
+      if(fname==='str')return String(args[0]);
+      if(fname==='bool')return Boolean(args[0]);
+      if(fname==='len'){const v=args[0];return Array.isArray(v)?v.length:String(v).length;}
+      if(fname==='sum'){const v=args[0];if(!Array.isArray(v))throw'TypeError';return v.reduce((a,b)=>a+b,0);}
+      if(fname==='max'){const v=Array.isArray(args[0])?args[0]:args;return Math.max(...v);}
+      if(fname==='min'){const v=Array.isArray(args[0])?args[0]:args;return Math.min(...v);}
+      if(fname==='abs')return Math.abs(args[0]);
+      if(fname==='round')return args.length>1?parseFloat(Number(args[0]).toFixed(args[1])):Math.round(args[0]);
+      if(fname==='range'){const[start,stop,step]=args.length===1?[0,args[0],1]:args.length===2?[args[0],args[1],1]:args;const r=[];for(let i=start;step>0?i<stop:i>stop;i+=step)r.push(i);return r;}
+      if(fname==='list'){const v=args[0];return Array.isArray(v)?[...v]:v?[...String(v)]:[]; }
+      if(fname==='type'){const v=args[0];if(Array.isArray(v))return"<class 'list'>";if(typeof v==='boolean')return"<class 'bool'>";if(Number.isInteger(v)&&typeof v==='number')return"<class 'int'>";if(typeof v==='number')return"<class 'float'>";return"<class 'str'>";}
+      if(fname in funcs){const fn=funcs[fname];const savedVars={};fn.params.forEach((p,idx)=>{if(p in vars)savedVars[p]=vars[p];vars[p]=args[idx]!==undefined?args[idx]:null;});const sig={};try{execLines(fn.body.map(l=>l.slice(fn.indent+4>0?fn.indent+4:4)),0,sig);}catch(e){if(e!==sig)throw e;}fn.params.forEach(p=>{if(p in savedVars)vars[p]=savedVars[p];else delete vars[p];});return'val'in sig?sig.val:null;}
+      throw`NameError: name '${fname}' is not defined`;}
+    function findOp(expr,op){let depth=0,inStr=false,sc='';for(let i=expr.length-op.length;i>=0;i--){const c=expr[i];if(inStr){if(c===sc)inStr=false;continue;}if(c==='"'||c==="'"){inStr=true;sc=c;continue;}if(c===')'||c===']')depth++;if(c==='('||c==='[')depth--;if(depth===0&&expr.slice(i,i+op.length)===op){const pre=i>0?expr[i-1]:'';const post=expr[i+op.length]||'';if(op==='>'&&(post==='='||pre==='-'))continue;if(op==='<'&&(post==='='||pre==='-'))continue;if(op==='='&&(pre==='>'||pre==='<'||pre==='!'||pre==='='))continue;if(op==='='&&post==='=')continue;if(op==='/'&&post==='/')continue;if(op==='-'&&(pre===''||'(+-*/<>=![,'.includes(pre)))continue;if(['in','and','or','not in'].includes(op)){if(/[a-zA-Z0-9_]/.test(pre)||/[a-zA-Z0-9_]/.test(post))continue;}return i;}}return-1;}
+    const ops=[['not in',(a,b)=>Array.isArray(b)?!b.includes(a):!String(b).includes(String(a))],['in',(a,b)=>Array.isArray(b)?b.includes(a):String(b).includes(String(a))],['and',(a,b)=>a&&b],['or',(a,b)=>a||b],['>=', (a,b)=>a>=b],['<=',(a,b)=>a<=b],['==',(a,b)=>a==b],['!=',(a,b)=>a!=b],['>',(a,b)=>a>b],['<',(a,b)=>a<b],['+',(a,b)=>(typeof a==='string'||typeof b==='string')?String(a)+String(b):(Array.isArray(a)&&Array.isArray(b))?[...a,...b]:a+b],['-',(a,b)=>a-b],['*',(a,b)=>a*b],['//',(a,b)=>Math.floor(a/b)],['/',(a,b)=>a/b],['%',(a,b)=>a%b]];
+    for(const[op,fn]of ops){const idx=findOp(expr,op);if(idx!==-1){const L=evalExpr(expr.slice(0,idx));const R=evalExpr(expr.slice(idx+op.length));return fn(L,R);}}
+    if(expr.startsWith('not '))return!evalExpr(expr.slice(4));
+    if(/^[a-zA-Z_]\w*$/.test(expr)){if(expr in vars)return vars[expr];throw`NameError: name '${expr}' is not defined`;}
+    throw`SyntaxError: could not parse: ${expr}`;
+  }
+  function evalPrint(argsStr){const sepM=argsStr.match(/,\s*sep\s*=\s*["']([^"']*)["']/);const sep=sepM?sepM[1]:' ';const clean=argsStr.replace(/,?\s*(sep|end)\s*=\s*["'][^"']*["']/g,'');if(!clean.trim()){output.push('');return;}const parts=splitCommaArgs(clean).map(p=>{const v=evalExpr(p);if(typeof v==='boolean')return v?'True':'False';if(Array.isArray(v))return'['+v.map(x=>{if(typeof x==='boolean')return x?'True':'False';if(typeof x==='string')return`'${x}'`;return x;}).join(', ')+']';return String(v);});output.push(parts.join(sep));}
+  const lines=code.split('\n');
+  function execLines(lineArr,baseIndent,returnSignal){
+    let i=0;
+    while(i<lineArr.length){
+      const raw=lineArr[i];const stripped=stripComment(raw).trimEnd();const content=stripped.trim();i++;if(!content)continue;const indent=getIndent(stripped);
+      const defM=content.match(/^def\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*:$/);
+      if(defM){const fname=defM[1];const params=defM[2].trim()?defM[2].split(',').map(p=>p.trim()):[];const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){body.push(lineArr[ci]);ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;funcs[fname]={params,body,indent};continue;}
+      if(content==='pass')continue;
+      const retM=content.match(/^return\s*(.*)$/);
+      if(retM&&returnSignal){if(retM[1].trim().includes(',')&&!retM[1].trim().startsWith('[')){returnSignal.val=splitCommaArgs(retM[1].trim()).map(v=>evalExpr(v.trim()));}else{returnSignal.val=retM[1].trim()?evalExpr(retM[1].trim()):null;}throw returnSignal;}
+      if(/^(if|elif)\s+.+:$/.test(content)||/^else\s*:$/.test(content)){
+        const chain=[];let ci=i-1;
+        while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();const cs=cl.trim();if(!cs){ci++;continue;}const clIndent=getIndent(cl);if(clIndent<indent)break;if(clIndent===indent){const im=cs.match(/^if\s+(.+):$/);const em=cs.match(/^elif\s+(.+):$/);const om=cs.match(/^else\s*:$/);if(im){chain.push({cond:im[1],body:[]});ci++;}else if(em){chain.push({cond:em[1],body:[]});ci++;}else if(om){chain.push({cond:null,body:[]});ci++;}else if(chain.length)break;else ci++;}else if(chain.length){chain[chain.length-1].body.push(lineArr[ci]);ci++;}else ci++;}
+        i=ci;for(const branch of chain){if(branch.cond===null||!!evalExpr(branch.cond)){execLines(branch.body.map(l=>l.slice(indent+4)),0,returnSignal);break;}}continue;}
+      const forM=content.match(/^for\s+([a-zA-Z_]\w*)\s+in\s+(.+):$/);
+      if(forM){const varName=forM[1];const iterable=evalExpr(forM[2]);const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;const iter=Array.isArray(iterable)?iterable:[];for(const val of iter){vars[varName]=val;execLines(body.map(l=>l.slice(indent+4)),0,returnSignal);}continue;}
+      const whileM=content.match(/^while\s+(.+):$/);
+      if(whileM){const body=[];let ci=i;while(ci<lineArr.length){const cl=stripComment(lineArr[ci]).trimEnd();if(!cl.trim()){ci++;continue;}if(getIndent(cl)<=indent)break;body.push(lineArr[ci]);ci++;}i=ci;let guard=0;while(evalExpr(whileM[1])&&guard++<1000){execLines(body.map(l=>l.slice(indent+4)),0,returnSignal);}continue;}
+      const tupleUnpack=content.match(/^([a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)+)\s*=\s*(.+)$/);
+      if(tupleUnpack){const names=tupleUnpack[1].split(',').map(n=>n.trim());const val=evalExpr(tupleUnpack[2].trim());const vals=Array.isArray(val)?val:[val];names.forEach((n,idx)=>{vars[n]=vals[idx]!==undefined?vals[idx]:null;});continue;}
+      const augM=content.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=)\s*(.+)$/);
+      if(augM){const cur=vars[augM[1]]!==undefined?vars[augM[1]]:0;const rhs=evalExpr(augM[3]);if(augM[2]==='+=')vars[augM[1]]=(typeof cur==='string'||typeof rhs==='string')?String(cur)+String(rhs):cur+rhs;if(augM[2]==='-=')vars[augM[1]]=cur-rhs;if(augM[2]==='*=')vars[augM[1]]=cur*rhs;if(augM[2]==='/=')vars[augM[1]]=cur/rhs;continue;}
+      const listAssignM=content.match(/^([a-zA-Z_]\w*)\[(.+)\]\s*=\s*(.+)$/);
+      if(listAssignM){const lst=vars[listAssignM[1]];if(!Array.isArray(lst))throw`TypeError`;const idx=evalExpr(listAssignM[2]);vars[listAssignM[1]][idx]=evalExpr(listAssignM[3]);continue;}
+      const assignM=content.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/s);
+      if(assignM&&!['if','elif','else','while','for'].includes(assignM[1])){vars[assignM[1]]=evalExpr(assignM[2].trim());continue;}
+      const printM=content.match(/^print\((.*)\)$/s);if(printM){evalPrint(printM[1]);continue;}
+      const stmtMethod=content.match(/^([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)\((.*)\)$/s);if(stmtMethod){evalExpr(content);continue;}
+      try{evalExpr(content);}catch(e){throw String(e);}
+    }
+  }
+  try{execLines(lines,0);}catch(e){error=String(e);}
+  return{output,error};
+}
+
+// ── ENGINE FUNCTIONS ────────────────────────────────────────
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function handleTab(e){if(e.key==='Tab'){e.preventDefault();const ta=e.target;const start=ta.selectionStart;ta.value=ta.value.slice(0,start)+'    '+ta.value.slice(ta.selectionEnd);ta.selectionStart=ta.selectionEnd=start+4;}}
+function runPython(stepId){const ed=editors[stepId];if(!ed)return;const code=ed.getValue();const outEl=document.getElementById(`output-${stepId}`);const runBtn=document.getElementById(`run-btn-${stepId}`);const stdinVal=document.getElementById(`stdin-${stepId}`)?.value||'';outEl.innerHTML='<span class="output-placeholder">Running...</span>';runBtn.disabled=true;setTimeout(()=>{try{const result=runPyLite(code,stdinVal);ed._lastOutput=result.output.join('\n');ed._lastInput=stdinVal;if(result.error){outEl.innerHTML=`<span class="output-error">⚠️ ${escHtml(result.error)}</span>`;}else if(result.output.length===0){outEl.innerHTML='<span class="output-placeholder">✓ Ran with no output.</span>';}else{outEl.innerHTML=result.output.map(l=>`<span class="output-line">${escHtml(l)}</span>`).join('\n');}}catch(e){outEl.innerHTML=`<span class="output-error">⚠️ ${escHtml(String(e))}</span>`;}runBtn.disabled=false;},30);}
+function checkCode(stepId){const step=MISSION.steps[stepId];if(!step.goalCheck)return;if(GS.codeChecked.has(stepId))return;const ed=editors[stepId];if(!ed)return;const code=ed.getValue();const output=ed._lastOutput||'';const inputVal=ed._lastInput||'';const result=step.goalCheck(code,output,inputVal);const resEl=document.getElementById(`code-result-${stepId}`);resEl.className='code-result '+(result.pass?'pass':'fail');resEl.textContent=result.msg;if(result.pass){GS.codeChecked.add(stepId);awardXP(10,true);maybeCompleteStep(stepId);}}
+function maybeCompleteStep(stepId){const quizDone=GS.quizAnswered.has(stepId);const step=MISSION.steps[stepId];const codeDone=!step.goalCheck||GS.codeChecked.has(stepId);if(quizDone&&codeDone&&!GS.completedSteps.has(stepId)){GS.completedSteps.add(stepId);updateProgress();buildNav();if(step.badge)showBadge(step.badge);const btn=document.getElementById(`unlock-btn-${stepId}`);if(btn)btn.classList.add('visible');}}
+function resetCode(idx){const step=MISSION.steps[idx];editors[idx]?.setValue(step.starterCode);const out=document.getElementById(`output-${idx}`);if(out)out.innerHTML='<span class="output-placeholder">Click ▶ Run to execute your Python code...</span>';const res=document.getElementById(`code-result-${idx}`);if(res){res.className='code-result';res.textContent='';}}
+function checkMCQ(stepIdx,chosen){if(GS.quizAnswered.has(stepIdx))return;const step=MISSION.steps[stepIdx];const correct=chosen===step.challenge.correct;if(correct){step.challenge.options.forEach((_,i)=>{const btn=document.getElementById(`opt-${stepIdx}-${i}`);if(!btn)return;btn.disabled=true;if(i===step.challenge.correct)btn.classList.add('correct');});awardXP(step.xp,true);GS.quizAnswered.add(stepIdx);maybeCompleteStep(stepIdx);}else{loseLife();const wrongBtn=document.getElementById(`opt-${stepIdx}-${chosen}`);if(wrongBtn){wrongBtn.disabled=true;wrongBtn.classList.add('wrong');setTimeout(()=>{wrongBtn.classList.remove('wrong');wrongBtn.disabled=true;wrongBtn.style.opacity='0.4';},800);}}}
+function nextStep(currentIdx){const next=currentIdx+1;if(next>=MISSION.steps.length){completeMission();return;}GS.currentStep=next;renderStep(next);buildNav();}
+function awardXP(amt,popup=false){GS.xp=Math.max(0,GS.xp+amt);document.getElementById('xp-count').textContent=GS.xp;if(popup&&amt>0){const el=document.createElement('div');el.className='xp-pop';el.textContent='+'+amt+' XP';const r=document.getElementById('xp-count').getBoundingClientRect();el.style.left=r.left+'px';el.style.top=(r.top+window.scrollY-10)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);}}
+function loseLife(){GS.lives=Math.max(0,GS.lives-1);document.getElementById('lives-display').textContent=['💀','❤️','❤️❤️','❤️❤️❤️'][GS.lives]||'💀';if(GS.lives===0)setTimeout(missionFailed,900);}
+function missionFailed(){const step=MISSION.steps[GS.currentStep];document.getElementById('failed-xp').textContent=GS.xp;document.getElementById('failed-step-info').textContent=`You were on Step ${GS.currentStep+1}: "${step.title}"`;const next=MISSION.nextMission;if(next){document.getElementById('failed-next-icon').textContent=next.badge;document.getElementById('failed-next-label').textContent='Continue to: '+next.title;document.getElementById('failed-next-btn').style.display='flex';}else{document.getElementById('failed-next-btn').style.display='none';}document.getElementById('failed-overlay').classList.add('show');}
+function failedGoNext(){document.getElementById('failed-overlay').classList.remove('show');goNextMission();}
+function showHint(idx){if(GS.hintUsed.includes(idx))return;GS.hintUsed.push(idx);awardXP(-MISSION.steps[idx].challenge.hintCost);const el=document.getElementById(`hint-${idx}`);const btn=el?.previousElementSibling?.querySelector('.hint-btn');if(el)el.classList.add('visible');if(btn){btn.disabled=true;btn.style.opacity='.5';btn.textContent='💡 Hint shown';}}
+function updateProgress(){const pct=Math.round(GS.completedSteps.size/MISSION.steps.length*100);document.getElementById('master-fill').style.width=pct+'%';document.getElementById('master-pct').textContent=pct+'%';}
+function showBadge(badge){GS.badges.push(badge);const toast=document.getElementById('badge-toast');document.getElementById('badge-icon').textContent=badge.icon;document.getElementById('badge-title').textContent=badge.name+' — Unlocked!';document.getElementById('badge-sub').textContent=badge.desc;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3500);}
+function completeMission(){localStorage.setItem('ks3_mission_3',JSON.stringify({xp:GS.xp,badges:GS.badges.map(b=>b.name),completedAt:new Date().toISOString()}));document.getElementById('final-xp').textContent=GS.xp;document.getElementById('final-badges').innerHTML=GS.badges.length?GS.badges.map(b=>`<div class="complete-badge">${b.icon} ${b.name}</div>`).join(''):'';const mapEl=document.getElementById('mission-map-display');mapEl.innerHTML=MISSION.missionMap.map(m=>{const isCurrent=m.id===3;const isDone=m.done||isCurrent;return`<div class="mm-item ${isDone?'done':''} ${isCurrent?'current':''}">${isDone?'<div class="mm-check">✓</div>':''}<div class="mm-icon">${m.badge}</div><div class="mm-label">M${m.id}</div></div>`;}).join('');const next=MISSION.nextMission;if(next){document.getElementById('next-mission-title').textContent=next.badge+' '+next.title;document.getElementById('next-mission-desc').textContent=next.description;document.getElementById('next-xp-bonus').textContent='+'+next.xpReward+' XP available';document.getElementById('next-btn-icon').textContent=next.badge;document.getElementById('next-btn-label').textContent='Start: '+next.title;document.getElementById('next-preview').style.display='block';document.getElementById('next-mission-btn').style.display='flex';}else{document.getElementById('next-preview').style.display='none';document.getElementById('next-mission-btn').textContent='🏆 All Missions Complete!';}document.getElementById('complete-overlay').classList.add('show');}
+function goNextMission(){const next=MISSION.nextMission;if(next&&next.file)window.location.href=next.file;}
+function restartMission(){GS={xp:0,lives:3,currentStep:0,completedSteps:new Set(),badges:[],hintUsed:[],quizAnswered:new Set(),codeChecked:new Set()};editors={};document.getElementById('complete-overlay').classList.remove('show');document.getElementById('failed-overlay').classList.remove('show');document.getElementById('xp-count').textContent='0';document.getElementById('lives-display').textContent='❤️❤️❤️';updateProgress();buildNav();renderStep(0);}
+function setFilter(t){if(t==='ng'){document.body.classList.remove('superpower');document.body.classList.toggle('nature-green');}else{document.body.classList.remove('nature-green');document.body.classList.toggle('superpower');}}
+function doLogin(){const name=document.getElementById('login-name').value.trim();const code=document.getElementById('login-class').value.trim();const errEl=document.getElementById('login-error');if(!name||!code){errEl.classList.add('show');return;}errEl.classList.remove('show');STUDENT.name=name;STUDENT.classCode=code.toUpperCase();const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);document.getElementById('student-avatar').textContent=initials;document.getElementById('student-name-display').textContent=name+' · '+STUDENT.classCode;document.getElementById('student-chip').style.display='flex';document.getElementById('login-overlay').classList.add('hidden');}
+function downloadProofOfLearning(){const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});const time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});const stepSections=MISSION.steps.map((step,idx)=>{if(!GS.completedSteps.has(idx))return'';const code=editors[idx]?.getValue()||'# (no code recorded)';const escaped=code.replace(/</g,'&lt;').replace(/>/g,'&gt;');return`<div class="step-section"><div class="step-header"><span class="step-num">Step ${idx+1}</span><span class="step-name">${step.title}</span><span class="step-xp">+${step.xp} XP</span></div><pre class="code-block">${escaped}</pre></div>`;}).join('');const badgesHtml=GS.badges.length?GS.badges.map(b=>`<div class="badge-item">${b.icon} <strong>${b.name}</strong><span>${b.desc}</span></div>`).join(''):'<div class="badge-item">—</div>';const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Proof of Learning — ${STUDENT.name}</title><style>@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:#1a202c;padding:32px;max-width:860px;margin:0 auto;}.certificate{background:#fff;border-radius:20px;box-shadow:0 4px 32px rgba(0,0,0,.1);overflow:hidden;}.cert-header{background:linear-gradient(135deg,#020008,#1a1035);color:#fff;padding:36px 40px;text-align:center;}.cert-school{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#a78bfa;margin-bottom:8px;}.cert-title{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:#c084fc;margin-bottom:6px;}.cert-sub{font-size:14px;color:#a78bfa;}.cert-body{padding:36px 40px;}.student-block{display:flex;align-items:center;gap:20px;background:#f7fafc;border:2px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:28px;}.student-avatar{width:56px;height:56px;border-radius:50%;background:#c084fc;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;flex-shrink:0;}.student-name{font-size:22px;font-weight:700;}.student-meta{font-size:13px;color:#718096;margin-top:3px;}.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}.stat-card{background:#f7fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;}.stat-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:#c084fc;}.stat-label{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-top:4px;}.section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#718096;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}.badges-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}.badge-item{display:flex;align-items:baseline;gap:10px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:8px;padding:10px 14px;font-size:14px;}.step-section{margin-bottom:20px;}.step-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}.step-num{font-family:'Space Mono',monospace;font-size:10px;background:#1a1035;color:#c084fc;padding:2px 8px;border-radius:4px;}.step-name{font-weight:700;font-size:15px;flex:1;}.step-xp{font-family:'Space Mono',monospace;font-size:11px;color:#38a169;background:#f0fff4;border:1px solid #9ae6b4;border-radius:20px;padding:2px 8px;}.code-block{background:#020008;color:#a78bfa;font-family:'Space Mono',monospace;font-size:12px;line-height:1.8;padding:16px;border-radius:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}.cert-footer{background:#f7fafc;border-top:1px solid #e2e8f0;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#718096;}.footer-stamp{font-family:'Space Mono',monospace;font-size:10px;color:#a0aec0;text-align:right;}@media print{body{padding:0;background:#fff;}.certificate{box-shadow:none;}}</style></head><body><div class="certificate"><div class="cert-header"><div class="cert-school">Corby Business Academy — Computer Science</div><div class="cert-title">Proof of Learning</div><div class="cert-sub">Adventure Game · Python Mission 3 of 4</div></div><div class="cert-body"><div class="student-block"><div class="student-avatar">${STUDENT.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div><div><div class="student-name">${STUDENT.name}</div><div class="student-meta">Class: ${STUDENT.classCode} · Completed: ${date} at ${time}</div></div></div><div class="stats-row"><div class="stat-card"><div class="stat-val">${GS.xp}</div><div class="stat-label">XP Earned</div></div><div class="stat-card"><div class="stat-val">${GS.completedSteps.size}/${MISSION.steps.length}</div><div class="stat-label">Steps Done</div></div><div class="stat-card"><div class="stat-val">${GS.badges.length}</div><div class="stat-label">Badges</div></div></div><div class="section-title">Badges Earned</div><div class="badges-grid">${badgesHtml}</div><div class="section-title">Code Written — Step by Step</div>${stepSections}</div><div class="cert-footer"><div>🗡️ Adventure Game · Corby Business Academy</div><div class="footer-stamp">Generated ${date} ${time}<br>Student: ${STUDENT.name} · ${STUDENT.classCode}</div></div></div></body></html>`;const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`proof_of_learning_${STUDENT.name.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${STUDENT.classCode.toLowerCase()}.html`;a.click();URL.revokeObjectURL(url);}
+
+function buildNav(){const nav=document.getElementById('step-nav');nav.innerHTML='';MISSION.steps.forEach((step,i)=>{const locked=i>0&&!GS.completedSteps.has(i-1);const completed=GS.completedSteps.has(i);const active=GS.currentStep===i;const isLast=i===MISSION.steps.length-1;nav.innerHTML+=`<div class="step-node ${completed?'completed':''} ${active?'active':''} ${locked?'locked':''}" onclick="navToStep(${i})">${!isLast?'<div class="step-connector"></div>':''}<div class="step-dot">${completed?'✓':(i+1)}</div><div><div class="step-name">${step.title}</div><div class="step-xp">${completed?'✓ '+step.xp+' XP':'+'+step.xp+' XP'}</div></div></div>`;});}
+function navToStep(i){if(i>0&&!GS.completedSteps.has(i-1))return;GS.currentStep=i;renderStep(i);buildNav();}
+function renderStep(idx){const step=MISSION.steps[idx];const ch=step.challenge;const qDone=GS.quizAnswered.has(idx);const cDone=GS.codeChecked.has(idx);const needsCode=!!step.goalCheck;const unlockReady=qDone&&(!needsCode||cDone);const hintUsed=GS.hintUsed.includes(idx);
+  const optsHtml=ch.options.map((o,i)=>`<button class="opt-btn ${qDone&&i===ch.correct?'correct':''}" id="opt-${idx}-${i}" onclick="checkMCQ(${idx},${i})" ${qDone?'disabled':''}>${o}</button>`).join('');
+  const needsInput=[1,3,5,6,9].includes(idx);
+  const inputHint=needsInput?`<div class="input-row"><span class="input-label">Input:</span><input class="stdin-input" id="stdin-${idx}" type="text" placeholder="Type player input here" value="${idx===1?'Hero':idx===3?'left':idx===6?'y':idx===9?'Arthur\\ny\\ny\\ny\\ny':''}" /><span class="stdin-hint">← player input for input()</span></div>`:'';
+  const html=`
+  <div class="mission-card"><div class="card-header"><span class="card-step-badge">Step ${idx+1} of ${MISSION.steps.length}</span><span class="card-xp-badge">+${step.xp} XP</span></div>
+  <div class="card-body"><h2 class="step-title">${step.title}</h2>${step.content}
+  <div class="challenge-box"><div class="challenge-label">Quiz challenge — +${step.xp} XP</div>
+  <div class="challenge-q">${ch.q}</div><div class="options-grid">${optsHtml}</div>
+  <div class="hint-row"><button class="hint-btn" onclick="showHint(${idx})" ${hintUsed?'disabled style="opacity:.5"':''}>💡 ${hintUsed?'Hint shown':`Hint (−${ch.hintCost} XP)`}</button></div>
+  <div class="hint-text ${hintUsed?'visible':''}" id="hint-${idx}">${ch.hint}</div>
+  <button class="unlock-btn ${unlockReady?'visible':''}" id="unlock-btn-${idx}" onclick="nextStep(${idx})">${idx===MISSION.steps.length-1?'🎉 Complete Mission!':'🔓 Unlock Next Step →'}</button>
+  </div></div></div>
+  <div class="editor-panel"><div class="editor-header"><span class="editor-title">Python Editor</span><span style="font-size:11px;color:var(--muted)">Write your code, then click Run ▶</span></div>
+  <div class="editor-wrap"><textarea class="code-editor" id="editor-${idx}" spellcheck="false" onkeydown="handleTab(event)">${escHtml(step.starterCode)}</textarea></div>
+  ${inputHint}
+  <div class="run-bar">
+    <button class="run-btn" id="run-btn-${idx}" onclick="runPython(${idx})">▶ Run</button>
+    ${needsCode?`<button class="check-code-btn" id="check-code-btn-${idx}" onclick="checkCode(${idx})" ${cDone?'disabled':''}>${cDone?'✓ Code Checked':'✔ Check My Code'}</button>`:''}
+    <button class="reset-btn" onclick="resetCode(${idx})">↺ Reset</button>
+  </div>
+  <div class="output-panel" id="output-${idx}"><span class="output-placeholder">Click ▶ Run to execute your Python code...</span></div>
+  ${needsCode?`<div class="code-result" id="code-result-${idx}"></div>`:''}
+  <div class="goal-box">🎯 <strong>Goal:</strong> ${step.goal}</div></div>`;
+  document.getElementById('centre-panel').innerHTML=html;window.scrollTo({top:0,behavior:'smooth'});
+  const ta=document.getElementById(`editor-${idx}`);editors[idx]={getValue:()=>ta.value,setValue:(v)=>{ta.value=v;},_lastOutput:'',_lastInput:''};}
+
+function init(){buildNav();renderStep(0);}
+init();
+</script>
+</body>
+</html>
